@@ -24,6 +24,13 @@ export function SettingsView({ profile }: { profile: UserProfile }) {
     setSaving(true);
     setSaveStatus('idle');
     try {
+      // Update app metadata (name)
+      await fetch('/api/metadata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: church.name })
+      });
+
       // Calculate total fixed costs from the list to synchronize with Finance dashboard
       const total = (church.fixedExpenses || []).reduce((acc: number, curr: any) => acc + (curr.amount || 0), 0);
       const updatedChurch = {
@@ -66,31 +73,56 @@ export function SettingsView({ profile }: { profile: UserProfile }) {
       </div>
       
       <form onSubmit={handleSave} className="space-y-8">
-        <section className="glass-card p-8 rounded-[2.5rem] space-y-6">
-          <h3 className="text-xl font-bold text-church-secondary border-b pb-2">Identidade Visual</h3>
+        <section className="glass-card p-8 rounded-[2.5rem] space-y-6 text-stone-800">
+          <h3 className="text-xl font-bold text-church-secondary border-b pb-2">Identidade e Aplicativo</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-stone-400 uppercase">Logo URL</label>
-              <input 
-                type="url" 
-                placeholder="https://exemplo.com/logo.png"
-                className="w-full p-3 rounded-xl bg-stone-100 border-none focus:ring-2 focus:ring-church-primary transition-all"
-                value={church.logoUrl || ''} 
-                onChange={e => setChurch({...church, logoUrl: e.target.value})}
-              />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-stone-400 uppercase">Ícone do App (Emoji ou URL de Imagem)</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="🌳 ou URL da imagem"
+                    className="flex-1 p-3 rounded-xl bg-stone-100 border-none focus:ring-2 focus:ring-church-primary transition-all"
+                    value={church.appIcon || '🌳'} 
+                    onChange={e => setChurch({...church, appIcon: e.target.value})}
+                  />
+                  <div className="w-12 h-12 bg-white rounded-xl shadow-inner flex items-center justify-center text-2xl border border-stone-100 overflow-hidden">
+                    {church.appIcon?.startsWith('http') ? (
+                      <img src={church.appIcon} alt="Icon" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    ) : (
+                      church.appIcon || '🌳'
+                    )}
+                  </div>
+                </div>
+                <p className="text-[10px] text-stone-400 italic">Este ícone aparecerá no atalho do celular quando os membros instalarem o app.</p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-stone-400 uppercase">Logo da Igreja (URL)</label>
+                <input 
+                  type="url" 
+                  placeholder="https://exemplo.com/logo.png"
+                  className="w-full p-3 rounded-xl bg-stone-100 border-none focus:ring-2 focus:ring-church-primary transition-all"
+                  value={church.logoUrl || ''} 
+                  onChange={e => setChurch({...church, logoUrl: e.target.value})}
+                />
+              </div>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-stone-400 uppercase">Primária</label>
-                <input type="color" className="w-full h-10 rounded-lg cursor-pointer" value={church.primaryColor || '#4A6741'} onChange={e => setChurch({...church, primaryColor: e.target.value})} />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-stone-400 uppercase">Secundária</label>
-                <input type="color" className="w-full h-10 rounded-lg cursor-pointer" value={church.secondaryColor || '#2D3E27'} onChange={e => setChurch({...church, secondaryColor: e.target.value})} />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-stone-400 uppercase">Destaque</label>
-                <input type="color" className="w-full h-10 rounded-lg cursor-pointer" value={church.accentColor || '#D4AF37'} onChange={e => setChurch({...church, accentColor: e.target.value})} />
+            <div className="space-y-4">
+              <label className="text-xs font-bold text-stone-400 uppercase block mb-2">Paleta de Cores</label>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-stone-400 uppercase">Primária</label>
+                  <input type="color" className="w-full h-12 rounded-xl cursor-pointer shadow-sm" value={church.primaryColor || '#4A6741'} onChange={e => setChurch({...church, primaryColor: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-stone-400 uppercase">Secundária</label>
+                  <input type="color" className="w-full h-12 rounded-xl cursor-pointer shadow-sm" value={church.secondaryColor || '#2D3E27'} onChange={e => setChurch({...church, secondaryColor: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-stone-400 uppercase">Destaque</label>
+                  <input type="color" className="w-full h-12 rounded-xl cursor-pointer shadow-sm" value={church.accentColor || '#D4AF37'} onChange={e => setChurch({...church, accentColor: e.target.value})} />
+                </div>
               </div>
             </div>
           </div>
