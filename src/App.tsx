@@ -85,7 +85,8 @@ export function App() {
           pastorName: 'Administrador',
           primaryColor: '#4A6741',
           secondaryColor: '#2D3E27',
-          accentColor: '#D4AF37'
+          accentColor: '#D4AF37',
+          logoUrl: 'https://i.imgur.com/lpVHWTp_d.png?maxwidth=520&shape=thumb&fidelity=high'
         };
         try {
           await setDoc(doc(db, 'churches', 'main_church'), defaultChurch);
@@ -109,15 +110,19 @@ export function App() {
       // Update Document Title
       document.title = church.name || 'Árvore da Vida';
       
-      // Update Favicon
+      // Update Favicon and Apple Touch Icon
       if (church.logoUrl) {
-        let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
-        if (!link) {
-          link = document.createElement('link');
-          link.rel = 'icon';
-          document.getElementsByTagName('head')[0].appendChild(link);
-        }
-        link.href = church.logoUrl;
+        const updateIcon = (rel: string) => {
+          let link: HTMLLinkElement | null = document.querySelector(`link[rel~='${rel}']`);
+          if (!link) {
+            link = document.createElement('link');
+            link.rel = rel;
+            document.getElementsByTagName('head')[0].appendChild(link);
+          }
+          link.href = church.logoUrl;
+        };
+        updateIcon('icon');
+        updateIcon('apple-touch-icon');
       }
     }
   }, [church]);
@@ -222,7 +227,11 @@ export function App() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-stone-50">
         <div className="animate-pulse flex flex-col items-center">
-          <div className="w-16 h-16 bg-church-primary/20 rounded-full mb-4"></div>
+          {church?.logoUrl ? (
+            <img src={church.logoUrl} alt="Logo" className="w-20 h-20 rounded-full object-cover mb-4 shadow-xl" referrerPolicy="no-referrer" />
+          ) : (
+            <div className="w-16 h-16 bg-church-primary/20 rounded-full mb-4"></div>
+          )}
           <p className="text-stone-400 font-serif italic">Cultivando sua Árvore da Vida...</p>
         </div>
       </div>
@@ -233,9 +242,16 @@ export function App() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-stone-50 p-4">
         <div className="glass-card p-8 rounded-[2rem] max-w-md w-full">
-          <h1 className="text-3xl font-serif text-church-primary font-bold text-center mb-2">
-            {church?.name || 'Árvore da Vida'}
-          </h1>
+          <div className="flex flex-col items-center mb-8">
+            {church?.logoUrl ? (
+              <img src={church.logoUrl} alt="Logo" className="w-24 h-24 rounded-full object-cover mb-4 shadow-2xl border-4 border-white" referrerPolicy="no-referrer" />
+            ) : (
+              <div className="w-20 h-20 bg-church-primary rounded-full flex items-center justify-center text-white text-3xl mb-4">🌳</div>
+            )}
+            <h1 className="text-3xl font-serif text-church-primary font-bold text-center">
+              {church?.name || 'Árvore da Vida'}
+            </h1>
+          </div>
           <p className="text-stone-500 text-center mb-8 italic">
             {authMode === 'login' ? 'Bem-vindo de volta' : 'Crie sua conta e floresça'}
           </p>
