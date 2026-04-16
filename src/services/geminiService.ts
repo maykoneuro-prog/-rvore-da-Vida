@@ -1,6 +1,17 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiInstance: any = null;
+
+function getAI() {
+  if (!aiInstance) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is not defined");
+    }
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+}
 
 export async function generateDevotional(churchName: string, theme?: string) {
   const prompt = `Gere um devocional cristão para a igreja "${churchName}". 
@@ -17,6 +28,7 @@ export async function generateDevotional(churchName: string, theme?: string) {
   Responda em Português do Brasil.`;
 
   try {
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash",
       contents: prompt,
