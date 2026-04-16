@@ -63,9 +63,14 @@ export function SettingsView({ profile }: { profile: UserProfile }) {
 
       if (response.ok) {
         const data = await response.json();
-        setChurch({ ...church, appIcon: data.url });
+        const updatedChurch = { ...church, appIcon: data.url };
+        setChurch(updatedChurch);
+        
+        // Save to Firestore immediately to avoid inconsistency on refresh
+        await updateDoc(doc(db, 'churches', 'main_church'), updatedChurch);
+        
         setSaveStatus('success');
-        setImageToCrop(null); // Close cropper
+        setImageToCrop(null); 
         setTimeout(() => setSaveStatus('idle'), 3000);
       } else {
         setSaveStatus('error');
@@ -192,21 +197,21 @@ export function SettingsView({ profile }: { profile: UserProfile }) {
               {/* Cropper Modal */}
               <AnimatePresence>
                 {imageToCrop && (
-                  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                  <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/90 backdrop-blur-md">
                     <motion.div 
-                      initial={{ scale: 0.9, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0.9, opacity: 0 }}
-                      className="bg-white rounded-[3rem] p-8 w-full max-w-xl shadow-2xl space-y-6"
+                      initial={{ y: 50, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: 50, opacity: 0 }}
+                      className="bg-white rounded-[2rem] sm:rounded-[3rem] p-5 sm:p-8 w-full max-w-xl max-h-[95vh] overflow-y-auto shadow-2xl space-y-4 sm:space-y-6"
                     >
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-xl font-serif italic text-church-secondary">Ajustar Ícone</h4>
+                      <div className="flex justify-between items-center sticky top-0 bg-white z-10 pb-2">
+                        <h4 className="text-lg sm:text-xl font-serif italic text-church-secondary">Ajustar Ícone</h4>
                         <button onClick={() => setImageToCrop(null)} className="p-2 hover:bg-stone-100 rounded-full">
                           <X size={20} className="text-stone-400" />
                         </button>
                       </div>
 
-                      <div className="relative h-80 bg-stone-900 rounded-3xl overflow-hidden shadow-inner">
+                      <div className="relative h-64 sm:h-80 bg-stone-900 rounded-2xl sm:rounded-3xl overflow-hidden shadow-inner">
                         <Cropper
                           image={imageToCrop}
                           crop={crop}
@@ -220,9 +225,9 @@ export function SettingsView({ profile }: { profile: UserProfile }) {
                         />
                       </div>
 
-                      <div className="space-y-4">
+                      <div className="space-y-4 pb-4">
                         <div className="flex items-center gap-4">
-                          <span className="text-xs font-bold text-stone-400 uppercase">Zoom</span>
+                          <span className="text-[10px] sm:text-xs font-bold text-stone-400 uppercase">Zoom</span>
                           <input
                             type="range"
                             value={zoom}
@@ -231,15 +236,15 @@ export function SettingsView({ profile }: { profile: UserProfile }) {
                             step={0.1}
                             aria-labelledby="Zoom"
                             onChange={(e) => setZoom(Number(e.target.value))}
-                            className="flex-1 h-2 bg-stone-100 rounded-lg appearance-none cursor-pointer accent-church-primary"
+                            className="flex-1 h-3 bg-stone-100 rounded-lg appearance-none cursor-pointer accent-church-primary"
                           />
                         </div>
 
-                        <div className="flex gap-3 pt-4">
+                        <div className="flex flex-col sm:flex-row gap-3">
                           <button
                             type="button"
                             onClick={() => setImageToCrop(null)}
-                            className="flex-1 p-4 rounded-2xl bg-stone-100 text-stone-500 font-bold hover:bg-stone-200 transition-all"
+                            className="flex-1 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-stone-100 text-stone-500 font-bold hover:bg-stone-200 transition-all text-sm"
                           >
                             Cancelar
                           </button>
@@ -247,7 +252,7 @@ export function SettingsView({ profile }: { profile: UserProfile }) {
                             type="button"
                             onClick={handleCropAndUpload}
                             disabled={isUploading}
-                            className="flex-1 p-4 rounded-2xl bg-church-primary text-white font-bold shadow-lg shadow-church-primary/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                            className="flex-1 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-church-primary text-white font-bold shadow-lg shadow-church-primary/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-50 text-sm"
                           >
                             {isUploading ? (
                               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
