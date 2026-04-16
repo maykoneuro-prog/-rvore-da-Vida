@@ -45,6 +45,52 @@ export function App() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (church) {
+      // Update Title
+      document.title = church.name || 'Árvore da Vida';
+
+      // Update Theme Color meta tag
+      let themeMeta = document.querySelector('meta[name="theme-color"]');
+      if (themeMeta) {
+        themeMeta.setAttribute('content', church.primaryColor || '#4A6741');
+      }
+
+      // Update Icons (Favicon and Apple Touch Icon)
+      const updateLinkTag = (rel: string, href: string) => {
+        let link = document.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement;
+        if (!link) {
+          link = document.createElement('link');
+          link.rel = rel;
+          document.head.appendChild(link);
+        }
+        link.href = href;
+      };
+
+      const iconPath = church.appIcon || '🌳';
+      
+      if (iconPath.startsWith('http')) {
+        updateLinkTag('icon', iconPath);
+        updateLinkTag('apple-touch-icon', iconPath);
+      } else {
+        // Render Emoji as Icon
+        const canvas = document.createElement('canvas');
+        canvas.width = 64;
+        canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.font = '48px serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(iconPath, 32, 35);
+          const dataUrl = canvas.toDataURL();
+          updateLinkTag('icon', dataUrl);
+          updateLinkTag('apple-touch-icon', dataUrl);
+        }
+      }
+    }
+  }, [church]);
+
+  useEffect(() => {
     const savedUid = localStorage.getItem('tree_uid');
     if (savedUid) {
       if (savedUid === 'global_admin') {
