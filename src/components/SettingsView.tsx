@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { db } from '../firebase';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { UserProfile } from '../App';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Crop as CropIcon, Check } from 'lucide-react';
+import Cropper from 'react-easy-crop';
+import { getCroppedImg } from '../lib/cropImage';
+import { AnimatePresence, motion } from 'framer-motion';
 
 export function SettingsView({ profile }: { profile: UserProfile }) {
   const [church, setChurch] = useState<any>(null);
@@ -21,15 +24,38 @@ export function SettingsView({ profile }: { profile: UserProfile }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Cropper state
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+
+  const onCropComplete = useCallback((_area: any, pixelArea: any) => {
+    setCroppedAreaPixels(pixelArea);
+  }, []);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImageToCrop(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCropAndUpload = async () => {
+    if (!imageToCrop || !croppedAreaPixels) return;
 
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('icon', file);
-
     try {
+      const croppedImageBlob = await getCroppedImg(imageToCrop, croppedAreaPixels);
+      const file = new File([croppedImageBlob], 'app-icon.png', { type: 'image/png' });
+
+      const formData = new FormData();
+      formData.append('icon', file);
+
       const response = await fetch('/api/upload-icon', {
         method: 'POST',
         body: formData,
@@ -39,12 +65,13 @@ export function SettingsView({ profile }: { profile: UserProfile }) {
         const data = await response.json();
         setChurch({ ...church, appIcon: data.url });
         setSaveStatus('success');
+        setImageToCrop(null); // Close cropper
         setTimeout(() => setSaveStatus('idle'), 3000);
       } else {
         setSaveStatus('error');
       }
     } catch (err) {
-      console.error('Erro no upload:', err);
+      console.error('Erro no processamento da imagem:', err);
       setSaveStatus('error');
     } finally {
       setIsUploading(false);
@@ -134,8 +161,8 @@ export function SettingsView({ profile }: { profile: UserProfile }) {
                     <input 
                       type="file" 
                       ref={fileInputRef}
-                      onChange={handleFileUpload}
-                      accept="image/*,.ico"
+                      onChange={handleFileSelect}
+                      accept="image/*"
                       className="hidden"
                     />
                     <button
@@ -145,7 +172,7 @@ export function SettingsView({ profile }: { profile: UserProfile }) {
                       className="flex-1 flex items-center justify-center gap-2 bg-stone-100 hover:bg-stone-200 text-stone-600 p-3 rounded-xl text-xs font-bold transition-all disabled:opacity-50"
                     >
                       <Upload size={16} />
-                      {isUploading ? 'Enviando...' : 'Fazer Upload de Ícone (.ico, .png, .jpg)'}
+                      Ajustar Foto (Como Rede Social)
                     </button>
                     {church.appIcon?.startsWith('/') && (
                       <button
@@ -161,6 +188,82 @@ export function SettingsView({ profile }: { profile: UserProfile }) {
                 </div>
                 <p className="text-[10px] text-stone-400 italic">Este ícone aparecerá no atalho do celular quando os membros instalarem o app. Recomendamos uma imagem quadrada.</p>
               </div>
+
+              {/* Cropper Modal */}
+              <AnimatePresence>
+                {imageToCrop && (
+                  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <motion.div 
+                      initial={{ scale: 0.9, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.9, opacity: 0 }}
+                      className="bg-white rounded-[3rem] p-8 w-full max-w-xl shadow-2xl space-y-6"
+                    >
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-xl font-serif italic text-church-secondary">Ajustar Ícone</h4>
+                        <button onClick={() => setImageToCrop(null)} className="p-2 hover:bg-stone-100 rounded-full">
+                          <X size={20} className="text-stone-400" />
+                        </button>
+                      </div>
+
+                      <div className="relative h-80 bg-stone-900 rounded-3xl overflow-hidden shadow-inner">
+                        <Cropper
+                          image={imageToCrop}
+                          crop={crop}
+                          zoom={zoom}
+                          aspect={1}
+                          onCropChange={setCrop}
+                          onCropComplete={onCropComplete}
+                          onZoomChange={setZoom}
+                          cropShape="round"
+                          showGrid={false}
+                        />
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-4">
+                          <span className="text-xs font-bold text-stone-400 uppercase">Zoom</span>
+                          <input
+                            type="range"
+                            value={zoom}
+                            min={1}
+                            max={3}
+                            step={0.1}
+                            aria-labelledby="Zoom"
+                            onChange={(e) => setZoom(Number(e.target.value))}
+                            className="flex-1 h-2 bg-stone-100 rounded-lg appearance-none cursor-pointer accent-church-primary"
+                          />
+                        </div>
+
+                        <div className="flex gap-3 pt-4">
+                          <button
+                            type="button"
+                            onClick={() => setImageToCrop(null)}
+                            className="flex-1 p-4 rounded-2xl bg-stone-100 text-stone-500 font-bold hover:bg-stone-200 transition-all"
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCropAndUpload}
+                            disabled={isUploading}
+                            className="flex-1 p-4 rounded-2xl bg-church-primary text-white font-bold shadow-lg shadow-church-primary/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                          >
+                            {isUploading ? (
+                              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            ) : (
+                              <>
+                                <Check size={18} />
+                                Confirmar e Salvar
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </div>
+                )}
+              </AnimatePresence>
               <div className="space-y-2">
                 <label className="text-xs font-bold text-stone-400 uppercase">Logo da Igreja (URL)</label>
                 <input 
