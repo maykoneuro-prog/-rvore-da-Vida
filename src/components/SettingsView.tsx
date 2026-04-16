@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../firebase';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { UserProfile } from '../App';
+import { Upload, X } from 'lucide-react';
 
 export function SettingsView({ profile }: { profile: UserProfile }) {
   const [church, setChurch] = useState<any>(null);
@@ -17,6 +18,38 @@ export function SettingsView({ profile }: { profile: UserProfile }) {
   }, []);
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('icon', file);
+
+    try {
+      const response = await fetch('/api/upload-icon', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setChurch({ ...church, appIcon: data.url });
+        setSaveStatus('success');
+        setTimeout(() => setSaveStatus('idle'), 3000);
+      } else {
+        setSaveStatus('error');
+      }
+    } catch (err) {
+      console.error('Erro no upload:', err);
+      setSaveStatus('error');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,24 +111,55 @@ export function SettingsView({ profile }: { profile: UserProfile }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-stone-400 uppercase">Ícone do App (Emoji ou URL de Imagem)</label>
-                <div className="flex gap-2">
-                  <input 
-                    type="text" 
-                    placeholder="🌳 ou URL da imagem"
-                    className="flex-1 p-3 rounded-xl bg-stone-100 border-none focus:ring-2 focus:ring-church-primary transition-all"
-                    value={church.appIcon || '🌳'} 
-                    onChange={e => setChurch({...church, appIcon: e.target.value})}
-                  />
-                  <div className="w-12 h-12 bg-white rounded-xl shadow-inner flex items-center justify-center text-2xl border border-stone-100 overflow-hidden">
-                    {church.appIcon?.startsWith('http') ? (
-                      <img src={church.appIcon} alt="Icon" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                    ) : (
-                      church.appIcon || '🌳'
+                <label className="text-xs font-bold text-stone-400 uppercase">Ícone do App</label>
+                <div className="flex flex-col gap-3">
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      placeholder="🌳 ou URL da imagem"
+                      className="flex-1 p-3 rounded-xl bg-stone-100 border-none focus:ring-2 focus:ring-church-primary transition-all text-sm"
+                      value={church.appIcon || '🌳'} 
+                      onChange={e => setChurch({...church, appIcon: e.target.value})}
+                    />
+                    <div className="w-12 h-12 bg-white rounded-xl shadow-inner flex items-center justify-center text-2xl border border-stone-100 overflow-hidden shrink-0">
+                      {church.appIcon?.startsWith('http') || church.appIcon?.startsWith('/') ? (
+                        <img src={church.appIcon} alt="Icon" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      ) : (
+                        church.appIcon || '🌳'
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="file" 
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                      accept="image/*,.ico"
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      disabled={isUploading}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex-1 flex items-center justify-center gap-2 bg-stone-100 hover:bg-stone-200 text-stone-600 p-3 rounded-xl text-xs font-bold transition-all disabled:opacity-50"
+                    >
+                      <Upload size={16} />
+                      {isUploading ? 'Enviando...' : 'Fazer Upload de Ícone (.ico, .png, .jpg)'}
+                    </button>
+                    {church.appIcon?.startsWith('/') && (
+                      <button
+                        type="button"
+                        onClick={() => setChurch({...church, appIcon: '🌳'})}
+                        className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all"
+                        title="Remover upload"
+                      >
+                        <X size={16} />
+                      </button>
                     )}
                   </div>
                 </div>
-                <p className="text-[10px] text-stone-400 italic">Este ícone aparecerá no atalho do celular quando os membros instalarem o app.</p>
+                <p className="text-[10px] text-stone-400 italic">Este ícone aparecerá no atalho do celular quando os membros instalarem o app. Recomendamos uma imagem quadrada.</p>
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-bold text-stone-400 uppercase">Logo da Igreja (URL)</label>
