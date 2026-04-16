@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      // Global Admin check based on UID or role in DB
+      return request.auth.uid == 'global_admin' || (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+
+    function isTreasurer() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'treasurer';
+    }
+
+    function isMedia() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'media';
+    }
+
+    function isMember() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read, write: if true; 
+    }
+
+    match /churches/{churchId} {
+      allow read, write: if true;
+
+      match /transactions/{transactionId} {
+        allow read, write: if true;
+      }
+
+      match /events/{eventId} {
+        allow read, write: if true;
+      }
+
+      match /attendance/{attendanceId} {
+        allow read, write: if true;
+      }
+      
+      match /devotionals/{devotionalId} {
+        allow read, write: if true;
+      }
+    }
+    
+    match /devotionals/{id} { allow read, write: if true; }
+    match /events/{id} { allow read, write: if true; }
+    match /transactions/{id} { allow read, write: if true; }
+  }
+}

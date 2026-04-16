@@ -1,0 +1,122 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Membro, Pastor, Tesoureiro ou Mídia",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "address": { "type": "string" },
+        "phone": { "type": "string" },
+        "birthDate": { "type": "string" },
+        "isConfirmedMember": { "type": "boolean" },
+        "password": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "member", "media", "treasurer"] },
+        "churchId": { "type": "string" },
+        "streak": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "phone", "password", "role", "churchId"]
+    },
+    "Church": {
+      "title": "Church",
+      "description": "Dados institucionais e visuais da igreja",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "pastorName": { "type": "string" },
+        "address": { "type": "string" },
+        "pixKey": { "type": "string" },
+        "bio": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "primaryColor": { "type": "string" },
+        "secondaryColor": { "type": "string" },
+        "accentColor": { "type": "string" },
+        "fixedCostsGoal": { "type": "number" },
+        "initialBalance": { "type": "number" },
+        "fixedExpenses": { 
+          "type": "array", 
+          "items": { 
+            "type": "object",
+            "properties": {
+              "category": { "type": "string" },
+              "amount": { "type": "number" }
+            }
+          }
+        }
+      },
+      "required": ["id", "name"]
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "Controle de frequência de cultos",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "eventId": { "type": "string" },
+        "totalPeople": { "type": "number" },
+        "hasVisitors": { "type": "boolean" },
+        "visitorCount": { "type": "number" },
+        "childrenCount": { "type": "number" },
+        "confirmed": { "type": "boolean" },
+        "date": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "eventId", "totalPeople", "date"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Lançamento financeiro",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "churchId": { "type": "string" },
+        "type": { "type": "string", "enum": ["income", "expense"] },
+        "category": { "type": "string" },
+        "amount": { "type": "number" },
+        "description": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["id", "churchId", "type", "amount", "date"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "Evento na agenda",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "churchId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "location": { "type": "string" },
+        "imageUrl": { "type": "string" }
+      },
+      "required": ["id", "churchId", "title", "date"]
+    }
+  },
+  "firestore": {
+    "/churches/{churchId}": {
+      "schema": "Church",
+      "description": "Dados da igreja"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Perfis de usuários"
+    },
+    "/churches/{churchId}/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Histórico financeiro"
+    },
+    "/churches/{churchId}/events/{eventId}": {
+      "schema": "Event",
+      "description": "Agenda de eventos"
+    }
+    "/churches/{churchId}/attendance/{attendanceId}": {
+      "schema": "Attendance",
+      "description": "Controle de frequência"
+    }
+  }
+}
