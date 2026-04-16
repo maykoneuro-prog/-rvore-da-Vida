@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, onSnapshot, query, updateDoc, doc, orderBy } from 'firebase/firestore';
 import { UserProfile } from '../App';
-import { Shield, User, Camera, Wallet, CheckCircle, Clock } from 'lucide-react';
+import { Shield, User, Camera, Wallet, CheckCircle, Clock, Star, Flame, Calendar } from 'lucide-react';
 
 export function MemberListView() {
   const [members, setMembers] = useState<UserProfile[]>([]);
   const [filter, setFilter] = useState<'all' | 'confirmed' | 'pending'>('all');
   const [loading, setLoading] = useState(true);
+
+  const currentMonthDays = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
 
   useEffect(() => {
     // Query all users to manage roles
@@ -111,6 +113,22 @@ export function MemberListView() {
                     </span>
                   </div>
                   <p className="text-xs text-stone-400">{member.phone} • {member.isConfirmedMember ? 'Membro Ativo' : 'Aguardando Aprovação'}</p>
+                </div>
+              </div>
+
+              {/* Devotional Stats for Pastor */}
+              <div className="flex flex-wrap gap-4 mt-2 md:mt-0 p-3 bg-stone-50 rounded-2xl border border-stone-100">
+                <div className="flex items-center gap-1.5" title="Fogo (Streak)">
+                  <Flame size={14} className="text-orange-500" />
+                  <span className="text-[10px] font-bold text-stone-600">{member.streak || 0}d</span>
+                </div>
+                <div className="flex items-center gap-1.5" title="Estrelas">
+                  <Star size={14} className="text-amber-500 fill-amber-500" />
+                  <span className="text-[10px] font-bold text-stone-600">{member.stars || 0}</span>
+                </div>
+                <div className="flex items-center gap-1.5" title="Progresso Mensal">
+                  <Calendar size={14} className="text-blue-500" />
+                  <span className="text-[10px] font-bold text-stone-600">{member.monthlyDevotionals || 0}/{currentMonthDays}</span>
                 </div>
               </div>
 

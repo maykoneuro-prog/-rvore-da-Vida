@@ -20,6 +20,9 @@ export interface UserProfile {
   churchId: string;
   streak: number;
   lastDevotionalDate: string;
+  stars?: number;
+  totalDevotionals?: number;
+  monthlyDevotionals?: number;
 }
 
 const GLOBAL_ADMIN_PHONE = "admin";
@@ -344,7 +347,11 @@ export function App() {
           )}
           <div className="text-right hidden sm:block">
             <p className="text-sm font-bold text-stone-800">{profile?.name}</p>
-            <p className="text-[10px] text-stone-500 uppercase tracking-widest">{profile?.role}</p>
+            <span className="text-[9px] bg-stone-100 px-2 py-0.5 rounded-full text-stone-500 uppercase font-bold tracking-widest">
+              {profile?.role === 'admin' ? 'Pastor / ADM' : 
+               profile?.role === 'treasurer' ? 'Tesoureiro' : 
+               profile?.role === 'media' ? 'Mídia' : 'Membro'}
+            </span>
           </div>
           <button onClick={logout} className="p-2 bg-stone-200 rounded-full hover:bg-stone-300 transition-colors">
             🚪

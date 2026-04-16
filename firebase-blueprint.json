@@ -14,7 +14,11 @@
         "password": { "type": "string" },
         "role": { "type": "string", "enum": ["admin", "member", "media", "treasurer"] },
         "churchId": { "type": "string" },
-        "streak": { "type": "number" },
+        "streak": { "type": "number", "description": "Dias seguidos de devocional" },
+        "totalDevotionals": { "type": "number", "description": "Total histórico" },
+        "monthlyDevotionals": { "type": "number", "description": "Total no mês atual" },
+        "lastDevotionalDate": { "type": "string", "format": "date" },
+        "stars": { "type": "number" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "name", "phone", "password", "role", "churchId"]
@@ -29,6 +33,7 @@
         "pastorName": { "type": "string" },
         "address": { "type": "string" },
         "pixKey": { "type": "string" },
+        "pixBeneficiary": { "type": "string", "description": "Nome do favorecido da chave PIX" },
         "bio": { "type": "string" },
         "logoUrl": { "type": "string" },
         "primaryColor": { "type": "string" },
@@ -42,12 +47,26 @@
             "type": "object",
             "properties": {
               "category": { "type": "string" },
-              "amount": { "type": "number" }
+              "amount": { "type": "number" },
+              "startDate": { "type": "string", "format": "date", "description": "YYYY-MM-DD" },
+              "installments": { "type": "number", "description": "0 para fixo contínuo, > 0 para parcelado" }
             }
           }
         }
       },
       "required": ["id", "name"]
+    },
+    "DevotionalLog": {
+      "title": "DevotionalLog",
+      "description": "Log de devocional realizado por um membro",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "date", "timestamp"]
     },
     "Attendance": {
       "title": "Attendance",
@@ -117,6 +136,10 @@
     "/churches/{churchId}/attendance/{attendanceId}": {
       "schema": "Attendance",
       "description": "Controle de frequência"
+    },
+    "/churches/{churchId}/devotionalLogs/{logId}": {
+      "schema": "DevotionalLog",
+      "description": "Histórico de devocionais dos membros"
     }
   }
 }

@@ -24,7 +24,14 @@ export function SettingsView({ profile }: { profile: UserProfile }) {
     setSaving(true);
     setSaveStatus('idle');
     try {
-      await updateDoc(doc(db, 'churches', 'main_church'), church);
+      // Calculate total fixed costs from the list to synchronize with Finance dashboard
+      const total = (church.fixedExpenses || []).reduce((acc: number, curr: any) => acc + (curr.amount || 0), 0);
+      const updatedChurch = {
+        ...church,
+        fixedCostsGoal: total > 0 ? total : church.fixedCostsGoal
+      };
+      
+      await updateDoc(doc(db, 'churches', 'main_church'), updatedChurch);
       setSaveStatus('success');
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch (err) {
@@ -109,8 +116,94 @@ export function SettingsView({ profile }: { profile: UserProfile }) {
               <input type="text" className="w-full p-3 rounded-xl bg-stone-100 border-none" value={church.pixKey || ''} onChange={e => setChurch({...church, pixKey: e.target.value})} />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold text-stone-400 uppercase">Meta de Custos Fixos (R$)</label>
+              <label className="text-xs font-bold text-stone-400 uppercase">Nome do Favorecido (PIX)</label>
+              <input type="text" className="w-full p-3 rounded-xl bg-stone-100 border-none" value={church.pixBeneficiary || ''} onChange={e => setChurch({...church, pixBeneficiary: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-stone-400 uppercase">Meta Global de Custos Fixos (R$)</label>
               <input type="number" className="w-full p-3 rounded-xl bg-stone-100 border-none" value={church.fixedCostsGoal ?? ''} onChange={e => setChurch({...church, fixedCostsGoal: parseFloat(e.target.value) || 0})} />
+              <p className="text-[10px] text-stone-400 italic">Dica: Se você detalhar as despesas abaixo, este valor será usado como meta.</p>
+            </div>
+            <div className="space-y-4 md:col-span-2">
+              <label className="text-xs font-bold text-stone-400 uppercase">Detalhamento de Despesas Fixas</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(church.fixedExpenses || []).map((exp: any, idx: number) => (
+                  <div key={idx} className="bg-stone-50 p-4 rounded-3xl border border-stone-100 space-y-3">
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" placeholder="Ex: Aluguel"
+                        className="flex-1 bg-white p-2 rounded-xl border border-stone-200 text-sm focus:ring-0"
+                        value={exp.category}
+                        onChange={e => {
+                          const newExp = [...(church.fixedExpenses || [])];
+                          newExp[idx].category = e.target.value;
+                          setChurch({...church, fixedExpenses: newExp});
+                        }}
+                      />
+                      <div className="relative w-32">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-xs font-bold">R$</span>
+                        <input 
+                          type="number" placeholder="0.00"
+                          className="w-full bg-white pl-8 pr-3 py-2 rounded-xl border border-stone-200 text-sm font-bold text-church-primary focus:ring-0"
+                          value={exp.amount}
+                          onChange={e => {
+                            const newExp = [...(church.fixedExpenses || [])];
+                            newExp[idx].amount = parseFloat(e.target.value) || 0;
+                            setChurch({...church, fixedExpenses: newExp});
+                          }}
+                        />
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const newExp = (church.fixedExpenses || []).filter((_: any, i: number) => i !== idx);
+                          setChurch({...church, fixedExpenses: newExp});
+                        }}
+                        className="text-red-400 hover:text-red-600 px-1"
+                      >✕</button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 pb-1">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-stone-400 uppercase">Data de Início</label>
+                        <input 
+                          type="month"
+                          className="w-full p-2 rounded-xl bg-white border border-stone-200 text-[10px]"
+                          value={exp.startDate?.substring(0, 7) || ''}
+                          onChange={e => {
+                            const newExp = [...(church.fixedExpenses || [])];
+                            newExp[idx].startDate = `${e.target.value}-01`;
+                            setChurch({...church, fixedExpenses: newExp});
+                          }}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-stone-400 uppercase">Duração (0=Infinito)</label>
+                        <input 
+                          type="number"
+                          placeholder="Meses"
+                          className="w-full p-2 rounded-xl bg-white border border-stone-200 text-[10px]"
+                          value={exp.installments || 0}
+                          onChange={e => {
+                            const newExp = [...(church.fixedExpenses || [])];
+                            newExp[idx].installments = parseInt(e.target.value) || 0;
+                            setChurch({...church, fixedExpenses: newExp});
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button 
+                type="button"
+                onClick={() => {
+                  const newExp = [...(church.fixedExpenses || []), { category: '', amount: 0, startDate: new Date().toISOString().split('T')[0], installments: 0 }];
+                  setChurch({...church, fixedExpenses: newExp});
+                }}
+                className="text-xs font-bold text-church-primary hover:underline"
+              >
+                + Adicionar Item de Despesa
+              </button>
             </div>
             <div className="space-y-2 md:col-span-2">
               <label className="text-xs font-bold text-stone-400 uppercase">Sobre a Igreja</label>
