@@ -1,6 +1,7 @@
 {
-  "name": "Árvore da Vida",
+  "name": "Paróquia Bom Samaritano",
   "description": "Gestão e engajamento para igrejas com interface gamificada e devocionais por IA.",
+  "appIcon": "🌳",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

@@ -33,47 +33,70 @@ async function startServer() {
 
   // Serve app manifest
   app.get("/manifest.json", (req, res) => {
-    const metadataPath = path.join(process.cwd(), "metadata.json");
-    const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
-    
-    const manifest = {
-      name: metadata.name || "Árvore da Vida",
-      short_name: metadata.name || "Árvore",
-      icons: [
-        {
-          src: "/api/app-icon.svg",
-          sizes: "any",
-          type: "image/svg+xml",
-          purpose: "any maskable"
-        }
-      ],
-      start_url: "/",
-      display: "standalone",
-      background_color: "#ffffff",
-      theme_color: "#4A6741"
-    };
-    res.json(manifest);
+    try {
+      const metadataPath = path.join(process.cwd(), "metadata.json");
+      const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
+      
+      const appName = metadata.name || "Árvore da Vida";
+      const themeColor = "#4A6741"; 
+
+      const manifest = {
+        name: appName,
+        short_name: appName.length > 12 ? appName.substring(0, 10) + ".." : appName,
+        icons: [
+          {
+            src: "/api/app-icon.svg",
+            sizes: "192x192",
+            type: "image/svg+xml",
+            purpose: "any"
+          },
+          {
+            src: "/api/app-icon.svg",
+            sizes: "512x512",
+            type: "image/svg+xml",
+            purpose: "maskable"
+          }
+        ],
+        start_url: "/",
+        display: "standalone",
+        background_color: "#ffffff",
+        theme_color: themeColor
+      };
+      res.json(manifest);
+    } catch (e) {
+      console.error("Manifest error:", e);
+      res.status(500).json({ error: "Manifest error" });
+    }
   });
 
-  // Dynamic icon generator (SVG for emojis or redirect for URLs)
+  // Dynamic icon generator
   app.get("/api/app-icon.svg", (req, res) => {
-    const metadataPath = path.join(process.cwd(), "metadata.json");
-    const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
-    const icon = metadata.appIcon || "🌳";
+    try {
+      const metadataPath = path.join(process.cwd(), "metadata.json");
+      if (!fs.existsSync(metadataPath)) {
+        throw new Error("Metadata file not found");
+      }
+      const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
+      const icon = metadata.appIcon || "🌳";
 
-    if (icon.startsWith("http")) {
-      return res.redirect(icon);
+      if (icon.startsWith("http")) {
+        return res.redirect(icon);
+      }
+
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+          <rect width="128" height="128" rx="32" fill="#4A6741" />
+          <text y="92" x="64" text-anchor="middle" font-family="Arial, sans-serif" font-size="75" fill="white">${icon}</text>
+        </svg>
+      `.trim();
+
+      res.setHeader("Content-Type", "image/svg+xml");
+      res.setHeader("Cache-Control", "public, max-age=3600");
+      res.send(svg);
+    } catch (e) {
+      console.error("Icon error:", e);
+      res.status(500).send("Error generating icon");
     }
-
-    const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128">
-        <rect width="128" height="128" rx="28" fill="#4A6741" />
-        <text y="92" x="64" text-anchor="middle" font-size="80">${icon}</text>
-      </svg>
-    `.trim();
-
-    res.setHeader("Content-Type", "image/svg+xml");
-    res.send(svg);
   });
 
   // Vite middleware for development
