@@ -28,7 +28,7 @@ export function SettingsView({ profile }: { profile: UserProfile }) {
       await fetch('/api/metadata', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: church.name })
+        body: JSON.stringify({ name: church.name, icon: church.appIcon })
       });
 
       // Calculate total fixed costs from the list to synchronize with Finance dashboard
