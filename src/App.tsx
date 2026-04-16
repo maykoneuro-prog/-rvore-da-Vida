@@ -86,7 +86,7 @@ export function App() {
           primaryColor: '#4A6741',
           secondaryColor: '#2D3E27',
           accentColor: '#D4AF37',
-          logoUrl: 'https://i.imgur.com/lpVHWTp_d.png?maxwidth=520&shape=thumb&fidelity=high'
+          logoUrl: 'https://i.imgur.com/lpVHWTp.png'
         };
         try {
           await setDoc(doc(db, 'churches', 'main_church'), defaultChurch);
