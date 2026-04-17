@@ -76,27 +76,25 @@ export function App() {
   useEffect(() => {
     const savedUid = localStorage.getItem('tree_uid');
     if (savedUid) {
-      if (savedUid === 'global_admin') {
-        setProfile({
-          uid: 'global_admin',
-          name: 'Administrador',
-          phone: GLOBAL_ADMIN_PHONE,
-          password: GLOBAL_ADMIN_PASS,
-          role: 'admin',
-          churchId: 'main_church',
-          streak: 0,
-          lastDevotionalDate: ''
-        });
-        setAuthMode('app');
-        setLoading(false);
-        return;
-      }
       const unsubscribe = onSnapshot(doc(db, 'users', savedUid), (docSnap) => {
         if (docSnap.exists()) {
           setProfile(docSnap.data() as UserProfile);
           setAuthMode('app');
+        } else if (savedUid === 'global_admin') {
+          setProfile({
+            uid: 'global_admin',
+            name: 'Administrador',
+            phone: GLOBAL_ADMIN_PHONE,
+            password: GLOBAL_ADMIN_PASS,
+            role: 'admin',
+            churchId: 'main_church',
+            streak: 0,
+            lastDevotionalDate: ''
+          });
+          setAuthMode('app');
         } else {
           localStorage.removeItem('tree_uid');
+          setAuthMode('login');
         }
         setLoading(false);
       }, () => setLoading(false));
@@ -104,7 +102,7 @@ export function App() {
     } else {
       setLoading(false);
     }
-  }, []);
+  }, [authMode]);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(db, 'churches', 'main_church'), async (docSnap) => {

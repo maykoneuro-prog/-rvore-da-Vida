@@ -31,9 +31,12 @@ export function DevotionalView({ profile }: { profile: UserProfile }) {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [ranking, setRanking] = useState<RankedMember[]>([]);
-  const [hasLoggedToday, setHasLoggedToday] = useState(false);
+  const [isLogging, setIsLogging] = useState(false);
+  const [localLoggedToday, setLocalLoggedToday] = useState(false);
 
-  const today = new Date().toISOString().split('T')[0];
+  // Use local date for "today" to match user's physical day
+  const today = new Date().toLocaleDateString('en-CA'); 
+  const hasLoggedToday = profile.lastDevotionalDate === today || localLoggedToday;
   const currentMonth = new Date().getMonth();
   const daysInMonth = new Date(new Date().getFullYear(), currentMonth + 1, 0).getDate();
 
@@ -67,16 +70,6 @@ export function DevotionalView({ profile }: { profile: UserProfile }) {
     // Remove the automatic call to logDevotional here
     // We will add a button at the end to make it explicit
     
-    // Check if logged today when mounting
-    const checkLog = async () => {
-      if (!profile.uid) return;
-      const logSnap = await getDocs(query(collection(db, 'churches', 'main_church', 'devotionalLogs'), where('userId', '==', profile.uid), where('date', '==', today)));
-      if (!logSnap.empty) {
-        setHasLoggedToday(true);
-      }
-    }
-    checkLog();
-
     return () => {
       unsubscribe();
       stopRank();
@@ -84,11 +77,22 @@ export function DevotionalView({ profile }: { profile: UserProfile }) {
   }, [profile.uid]);
 
   const logDevotional = async () => {
+    if (isLogging) return;
+    setIsLogging(true);
+    setError('');
+    
+    const operationType = 'write';
+    const logPath = `churches/main_church/devotionalLogs/${profile.uid}_${today}`;
+    
     try {
       const logRef = doc(db, 'churches', 'main_church', 'devotionalLogs', `${profile.uid}_${today}`);
-      const logSnap = await getDocs(query(collection(db, 'churches', 'main_church', 'devotionalLogs'), where('userId', '==', profile.uid), where('date', '==', today)));
+      const logColl = collection(db, 'churches', 'main_church', 'devotionalLogs');
+      
+      console.log("Checking log for:", profile.uid, today);
+      const logSnap = await getDocs(query(logColl, where('userId', '==', profile.uid), where('date', '==', today)));
       
       if (logSnap.empty) {
+        console.log("No log found. Creating log and updating stats...");
         // Not logged today, Create log
         await setDoc(logRef, {
           userId: profile.uid,
@@ -101,24 +105,47 @@ export function DevotionalView({ profile }: { profile: UserProfile }) {
         const userRef = doc(db, 'users', profile.uid);
         const yesterdayDate = new Date();
         yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-        const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
+        const yesterdayStr = yesterdayDate.toLocaleDateString('en-CA');
 
         const isStreak = profile.lastDevotionalDate === yesterdayStr;
         const newStreak = isStreak ? (profile.streak || 0) + 1 : 1;
         
-        await updateDoc(userRef, {
+        await setDoc(userRef, {
           streak: newStreak,
           lastDevotionalDate: today,
           totalDevotionals: (profile.totalDevotionals || 0) + 1,
           monthlyDevotionals: (profile.monthlyDevotionals || 0) + 1,
           stars: (profile.stars || 0) + 10 // Gamification: 10 stars per devotional
-        });
-        setHasLoggedToday(true);
+        }, { merge: true });
+        console.log("Stats updated successfully.");
       } else {
-        setHasLoggedToday(true);
+        console.log("Log already exists. Ensuring profile is marked as read today.");
+        // If log exists but profile is stale (maybe due to rules error in previous attempt)
+        // We force update the profile to sync it
+        if (profile.lastDevotionalDate !== today) {
+          const userRef = doc(db, 'users', profile.uid);
+          await setDoc(userRef, {
+            lastDevotionalDate: today
+          }, { merge: true });
+          console.log("Profile date synced with existing log.");
+        }
       }
-    } catch (err) {
+      setLocalLoggedToday(true);
+    } catch (err: any) {
       console.error("Erro ao logar devocional:", err);
+      
+      // Standardized error info for debugging
+      const errInfo = {
+        error: err?.message || String(err),
+        operation: operationType,
+        path: logPath,
+        uid: profile.uid
+      };
+      console.error('Firestore Error Detailed:', JSON.stringify(errInfo));
+      
+      setError("Houve um erro ao registrar sua leitura. Verifique sua conexão e tente novamente.");
+    } finally {
+      setIsLogging(false);
     }
   };
 
@@ -259,11 +286,20 @@ export function DevotionalView({ profile }: { profile: UserProfile }) {
                     <p className="text-stone-400 text-sm animate-bounce">↓ Role até o fim para concluir</p>
                     <button 
                       onClick={logDevotional}
-                      className="w-full max-w-md bg-church-accent text-church-secondary p-6 rounded-[2rem] font-black text-xl shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 border-4 border-white"
+                      disabled={isLogging}
+                      className={`w-full max-w-md ${isLogging ? 'bg-stone-400' : 'bg-church-accent'} text-church-secondary p-6 rounded-[2rem] font-black text-xl shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 border-4 border-white`}
                     >
-                      🔥 CONCLUIR DEVOCIONAL
+                      {isLogging ? (
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin"></span>
+                          REGISTRANDO...
+                        </div>
+                      ) : (
+                        <>🔥 CONCLUIR DEVOCIONAL</>
+                      )}
                     </button>
                     <p className="text-[10px] text-stone-400 uppercase font-bold tracking-widest">+10 Estrelas • +1 dia de Chama Acesa</p>
+                    {error && <p className="text-red-500 text-xs font-bold animate-pulse">{error}</p>}
                   </>
                 ) : (
                   <div className="w-full p-8 bg-green-50 border-2 border-green-200 rounded-[2.5rem] text-center space-y-2 animate-in zoom-in duration-500">
