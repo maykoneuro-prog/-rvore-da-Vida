@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { UserProfile } from '../App';
-import { format, addWeeks, addMonths, eachDayOfInterval, getDay } from 'date-fns';
+import { format, addWeeks, addMonths, eachDayOfInterval, getDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { collection, onSnapshot, addDoc, query, orderBy, deleteDoc, doc, writeBatch, where } from 'firebase/firestore';
 import { Users, Baby, UserCheck } from 'lucide-react';
@@ -231,7 +231,7 @@ export function EventsView({ profile }: { profile: UserProfile }) {
 
       {selectedEvent ? (
         <div className="glass-card overflow-hidden rounded-[2.5rem] animate-in zoom-in duration-300">
-          <div className="h-[900px] bg-stone-200 relative">
+          <div className="aspect-video sm:h-96 bg-stone-200 relative">
             {selectedEvent.imageUrl ? (
               <img src={selectedEvent.imageUrl} alt={selectedEvent.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             ) : (
@@ -239,7 +239,7 @@ export function EventsView({ profile }: { profile: UserProfile }) {
             )}
             <button 
               onClick={() => setSelectedEvent(null)}
-              className="absolute top-4 right-4 bg-black/50 text-white w-10 h-10 rounded-full flex items-center justify-center"
+              className="absolute top-4 right-4 bg-black/50 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold"
             >
               ✕
             </button>
@@ -279,12 +279,78 @@ export function EventsView({ profile }: { profile: UserProfile }) {
               </div>
             )}
 
-            <div className="flex items-center gap-2 text-stone-500">
+            <div className="flex items-center gap-2 text-stone-500 text-sm">
               <span>📍</span> {selectedEvent.location}
             </div>
             <p className="text-stone-600 leading-relaxed pt-4 border-t border-stone-100">
               {selectedEvent.description}
             </p>
+          </div>
+        </div>
+      ) : viewMode === 'calendar' ? (
+        <div className="glass-card p-4 rounded-[2.5rem] animate-in fade-in zoom-in duration-500">
+          <div className="grid grid-cols-7 gap-1">
+            {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
+              <div key={day} className="text-center text-[10px] font-black text-stone-400 uppercase py-2">
+                {day}
+              </div>
+            ))}
+            {(() => {
+              const start = startOfWeek(startOfMonth(new Date()));
+              const end = endOfWeek(endOfMonth(new Date()));
+              const days = eachDayOfInterval({ start, end });
+              
+              return days.map(day => {
+                const dayEvents = events.filter(e => isSameDay(new Date(e.date), day));
+                const isCurrentMonth = day.getMonth() === new Date().getMonth();
+                
+                return (
+                  <div 
+                    key={day.toISOString()} 
+                    className={`aspect-square p-1 border border-stone-50 rounded-xl relative flex flex-col items-center justify-center ${
+                      isCurrentMonth ? 'bg-white' : 'bg-stone-50 opacity-30 shadow-inner'
+                    }`}
+                  >
+                    <span className={`text-[10px] sm:text-xs font-bold ${
+                      isSameDay(day, new Date()) ? 'text-church-primary bg-church-primary/10 w-6 h-6 rounded-full flex items-center justify-center' : 'text-stone-500'
+                    }`}>
+                      {format(day, 'd')}
+                    </span>
+                    <div className="flex gap-0.5 mt-1">
+                      {dayEvents.slice(0, 3).map((e, i) => (
+                        <div 
+                          key={i} 
+                          onClick={() => setSelectedEvent(e)}
+                          className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-church-primary cursor-pointer hover:scale-150 transition-transform"
+                        ></div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+          <div className="mt-6 space-y-2">
+            <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-widest px-2">Próximos este mês</h4>
+            <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
+              {events
+                .filter(e => new Date(e.date).getMonth() === new Date().getMonth())
+                .map(e => (
+                  <div 
+                    key={e.id}
+                    onClick={() => setSelectedEvent(e)}
+                    className="flex items-center gap-3 p-3 bg-stone-50 rounded-2xl cursor-pointer hover:bg-stone-100 transition-colors"
+                  >
+                    <div className="w-8 h-8 bg-church-primary/10 rounded-lg flex items-center justify-center text-xs font-bold text-church-primary">
+                      {format(new Date(e.date), 'dd')}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs font-bold text-stone-800 line-clamp-1">{e.title}</p>
+                      <p className="text-[10px] text-stone-400">{format(new Date(e.date), 'HH:mm')}h</p>
+                    </div>
+                  </div>
+                ))}
+            </div>
           </div>
         </div>
       ) : (
@@ -295,7 +361,7 @@ export function EventsView({ profile }: { profile: UserProfile }) {
               onClick={() => setSelectedEvent(event)}
               className="glass-card p-4 rounded-3xl flex gap-4 items-center hover:scale-[1.02] transition-transform cursor-pointer"
             >
-              <div className="w-20 h-20 bg-stone-100 rounded-2xl overflow-hidden flex-shrink-0">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-stone-100 rounded-2xl overflow-hidden flex-shrink-0">
                 {event.imageUrl ? (
                   <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                 ) : (
@@ -303,9 +369,9 @@ export function EventsView({ profile }: { profile: UserProfile }) {
                 )}
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-church-secondary">{event.title}</h3>
-                <p className="text-xs text-stone-400">{format(new Date(event.date), "d 'de' MMM '•' HH:mm'h'", { locale: ptBR })}</p>
-                <p className="text-xs text-stone-500 mt-1 line-clamp-1">📍 {event.location}</p>
+                <h3 className="font-bold text-church-secondary text-sm sm:text-base">{event.title}</h3>
+                <p className="text-[10px] sm:text-xs text-stone-400">{format(new Date(event.date), "d 'de' MMM '•' HH:mm'h'", { locale: ptBR })}</p>
+                <p className="text-[10px] sm:text-xs text-stone-500 mt-1 line-clamp-1">📍 {event.location}</p>
               </div>
               {(profile.role === 'admin' || profile.role === 'media') && (
                 <button 

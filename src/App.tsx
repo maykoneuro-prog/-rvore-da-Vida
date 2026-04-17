@@ -488,7 +488,7 @@ export function App() {
                 className="glass-card p-10 rounded-[3rem] text-center hover:scale-105 transition-all cursor-pointer group border-2 border-church-primary/10"
               >
                 <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-blue-100 transition-colors">
-                  <span className="text-4xl">🤝</span>
+                  <span className="text-4xl">📅</span>
                 </div>
                 <h3 className="text-xl font-bold text-church-primary">Comunhão</h3>
                 <p className="text-sm text-stone-500 mt-2">Agenda da Igreja</p>
@@ -521,7 +521,7 @@ export function App() {
           onClick={() => setCurrentView('home')}
           className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-church-primary text-white px-8 py-3 rounded-full shadow-2xl hover:scale-110 transition-transform z-50 font-bold"
         >
-          ← Voltar para a Árvore
+          ← Voltar para o Início
         </button>
       )}
     </div>
