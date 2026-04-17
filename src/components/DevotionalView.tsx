@@ -252,6 +252,7 @@ export function DevotionalView({ profile }: { profile: UserProfile }) {
                     <p className="text-stone-600 text-base leading-relaxed">{devotional.application}</p>
                   </div>
                 </div>
+              </div>
               <div className="pt-10 flex flex-col items-center gap-6">
                 {!hasLoggedToday ? (
                   <>
