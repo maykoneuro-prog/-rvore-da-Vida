@@ -64,10 +64,18 @@ export function DevotionalView({ profile }: { profile: UserProfile }) {
       }));
     });
 
-    // Log the daily devotional reading for the member
-    if (profile.uid && !hasLoggedToday) {
-      logDevotional();
+    // Remove the automatic call to logDevotional here
+    // We will add a button at the end to make it explicit
+    
+    // Check if logged today when mounting
+    const checkLog = async () => {
+      if (!profile.uid) return;
+      const logSnap = await getDocs(query(collection(db, 'churches', 'main_church', 'devotionalLogs'), where('userId', '==', profile.uid), where('date', '==', today)));
+      if (!logSnap.empty) {
+        setHasLoggedToday(true);
+      }
     }
+    checkLog();
 
     return () => {
       unsubscribe();
@@ -244,6 +252,25 @@ export function DevotionalView({ profile }: { profile: UserProfile }) {
                     <p className="text-stone-600 text-base leading-relaxed">{devotional.application}</p>
                   </div>
                 </div>
+              <div className="pt-10 flex flex-col items-center gap-6">
+                {!hasLoggedToday ? (
+                  <>
+                    <p className="text-stone-400 text-sm animate-bounce">↓ Role até o fim para concluir</p>
+                    <button 
+                      onClick={logDevotional}
+                      className="w-full max-w-md bg-church-accent text-church-secondary p-6 rounded-[2rem] font-black text-xl shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 border-4 border-white"
+                    >
+                      🔥 CONCLUIR DEVOCIONAL
+                    </button>
+                    <p className="text-[10px] text-stone-400 uppercase font-bold tracking-widest">+10 Estrelas • +1 dia de Chama Acesa</p>
+                  </>
+                ) : (
+                  <div className="w-full p-8 bg-green-50 border-2 border-green-200 rounded-[2.5rem] text-center space-y-2 animate-in zoom-in duration-500">
+                    <div className="w-16 h-16 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">✓</div>
+                    <h4 className="text-2xl font-bold text-green-700">Chama Acesa!</h4>
+                    <p className="text-green-600 font-medium">Você concluiu seu devocional de hoje. Até amanhã!</p>
+                  </div>
+                )}
               </div>
             </div>
           ) : (
@@ -283,7 +310,7 @@ export function DevotionalView({ profile }: { profile: UserProfile }) {
 
               <div className="flex gap-4 pt-2">
                 <div className="bg-white/10 p-4 rounded-3xl flex-1 text-center border border-white/10">
-                  <p className="text-[9px] uppercase font-bold opacity-60 mb-1">🔥 Streak</p>
+                  <p className="text-[9px] uppercase font-bold opacity-60 mb-1">🔥 Chama Acesa</p>
                   <p className="text-2xl font-bold">{profile.streak || 0}d</p>
                 </div>
                 <div className="bg-white/10 p-4 rounded-3xl flex-1 text-center border border-white/10">
@@ -315,7 +342,7 @@ export function DevotionalView({ profile }: { profile: UserProfile }) {
                     <p className="text-sm font-bold text-stone-800">{member.name}</p>
                     <div className="flex items-center gap-1 text-[9px] text-stone-400 font-bold uppercase">
                       <Star size={8} className="fill-stone-300 text-stone-300" />
-                      {member.stars} Estrelas • {member.streak}d Fogo
+                      {member.stars} Estrelas • {member.streak}d Fogo no Altar
                     </div>
                   </div>
                   <div className="flex items-center gap-0.5">

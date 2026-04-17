@@ -9,6 +9,7 @@ import { FinanceView } from './components/FinanceView';
 import { SettingsView } from './components/SettingsView';
 import { MemberListView } from './components/MemberListView';
 import { AttendanceView } from './components/AttendanceView';
+import { checkAndNotify } from './services/notificationService';
 
 export interface UserProfile {
   uid: string;
@@ -44,6 +45,32 @@ export function App() {
     birthDate: '', 
     isMember: 'Sim' 
   });
+
+  const [events, setEvents] = useState<any[]>([]);
+
+  // Notificações - Loop de Verificação
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'events'), (snap) => {
+      setEvents(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    if (!profile || profile.uid === 'global_admin') return;
+    
+    const interval = setInterval(() => {
+      const today = new Date().toISOString().split('T')[0];
+      const hasLoggedToday = profile.lastDevotionalDate === today;
+      checkAndNotify(events, hasLoggedToday);
+    }, 60000);
+
+    const today = new Date().toISOString().split('T')[0];
+    const hasLoggedToday = profile.lastDevotionalDate === today;
+    checkAndNotify(events, hasLoggedToday);
+
+    return () => clearInterval(interval);
+  }, [profile, events]);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -465,7 +492,7 @@ export function App() {
               <h2 className="text-4xl font-serif text-church-secondary mb-2 italic">Olá, {profile?.name.split(' ')[0]}</h2>
               <div className="flex items-center justify-center gap-2 text-church-accent">
                 <span>🔥</span>
-                <span className="font-bold">{profile?.streak || 0} dias de ofensiva</span>
+                <span className="font-bold">{profile?.streak || 0} dias de Chama Acesa</span>
               </div>
             </div>
 

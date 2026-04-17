@@ -47,6 +47,22 @@ export function SettingsView({ profile }: { profile: UserProfile }) {
     setSaving(false);
   };
 
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission>(
+    typeof window !== 'undefined' ? Notification.permission : 'default'
+  );
+
+  const handleRequestPermission = async () => {
+    if (!("Notification" in window)) return;
+    const permission = await Notification.requestPermission();
+    setNotifPermission(permission);
+    if (permission === 'granted') {
+      new Notification("Samaritano", { 
+        body: "Notificações ativadas! Agora você será avisado sobre devocionais e eventos.",
+        icon: "/icons/icon-192.png" 
+      });
+    }
+  };
+
   if (loading) return <div className="p-8 text-center">Carregando configurações...</div>;
   if (!church) return (
     <div className="p-8 text-center">
@@ -151,6 +167,36 @@ export function SettingsView({ profile }: { profile: UserProfile }) {
               <label className="text-xs font-bold text-stone-400 uppercase">Sobre a Igreja</label>
               <textarea className="w-full p-3 rounded-xl bg-stone-100 border-none h-32" value={church.bio || ''} onChange={e => setChurch({...church, bio: e.target.value})} />
             </div>
+          </div>
+        </section>
+
+        <section className="glass-card p-8 rounded-[2.5rem] space-y-6 text-stone-800">
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="text-xl font-bold text-church-secondary">Notificações e Lembretes</h3>
+              <p className="text-stone-400 text-xs">Receba o devocional às 06h e avisos de eventos no seu celular.</p>
+            </div>
+            <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${notifPermission === 'granted' ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-500'}`}>
+              {notifPermission === 'granted' ? 'Ativado' : 'Desativado'}
+            </div>
+          </div>
+          
+          <div className="bg-stone-50 p-6 rounded-3xl border border-stone-100 space-y-4">
+            <p className="text-sm text-stone-600 leading-relaxed">
+              O navegador pedirá sua permissão para enviar notificações. Certifique-se de que o app esteja instalado (PWA) para melhor funcionamento em segundo plano.
+            </p>
+            <button 
+              type="button"
+              onClick={handleRequestPermission}
+              className={`w-full p-4 rounded-xl font-bold transition-all ${notifPermission === 'granted' ? 'bg-stone-200 text-stone-500 cursor-default' : 'bg-church-accent text-church-secondary hover:scale-105'}`}
+            >
+              {notifPermission === 'granted' ? 'Notificações Já Ativadas' : 'Ativar Notificações neste Dispositivo'}
+            </button>
+            {notifPermission === 'denied' && (
+              <p className="text-[10px] text-red-500 text-center font-bold uppercase italic">
+                Você bloqueou as notificações. Acesse as configurações do seu navegador para liberar.
+              </p>
+            )}
           </div>
         </section>
 
