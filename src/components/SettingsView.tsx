@@ -78,16 +78,16 @@ export function SettingsView({ profile }: { profile: UserProfile }) {
                 <div className="flex gap-2">
                   <input 
                     type="text" 
-                    placeholder="🌳 ou URL da imagem"
+                    placeholder="URL ou Emoji"
                     className="flex-1 p-3 rounded-xl bg-stone-100 border-none focus:ring-2 focus:ring-church-primary transition-all text-sm"
-                    value={church.appIcon || '🌳'} 
+                    value={church.appIcon || '/icons/icon-512.png'} 
                     onChange={e => setChurch({...church, appIcon: e.target.value})}
                   />
                   <div className="w-12 h-12 bg-white rounded-xl shadow-inner flex items-center justify-center text-2xl border border-stone-100 overflow-hidden shrink-0">
                     {church.appIcon?.startsWith('http') || church.appIcon?.startsWith('/') ? (
                       <img src={church.appIcon} alt="Icon" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                     ) : (
-                      church.appIcon || '🌳'
+                      church.appIcon || '⛪'
                     )}
                   </div>
                 </div>
@@ -109,11 +109,11 @@ export function SettingsView({ profile }: { profile: UserProfile }) {
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-stone-400 uppercase">Primária</label>
-                  <input type="color" className="w-full h-12 rounded-xl cursor-pointer shadow-sm" value={church.primaryColor || '#4A6741'} onChange={e => setChurch({...church, primaryColor: e.target.value})} />
+                  <input type="color" className="w-full h-12 rounded-xl cursor-pointer shadow-sm" value={church.primaryColor || '#1e1e1e'} onChange={e => setChurch({...church, primaryColor: e.target.value})} />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-stone-400 uppercase">Secundária</label>
-                  <input type="color" className="w-full h-12 rounded-xl cursor-pointer shadow-sm" value={church.secondaryColor || '#2D3E27'} onChange={e => setChurch({...church, secondaryColor: e.target.value})} />
+                  <input type="color" className="w-full h-12 rounded-xl cursor-pointer shadow-sm" value={church.secondaryColor || '#121212'} onChange={e => setChurch({...church, secondaryColor: e.target.value})} />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-stone-400 uppercase">Destaque</label>

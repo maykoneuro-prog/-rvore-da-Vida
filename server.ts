@@ -37,8 +37,8 @@ async function startServer() {
       const metadataPath = path.join(process.cwd(), "metadata.json");
       const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
       
-      const appName = metadata.name || "Árvore da Vida";
-      const iconUrl = metadata.appIcon?.startsWith("http") ? metadata.appIcon : "/api/app-icon.svg";
+      const appName = metadata.name || "Samaritano";
+      const iconUrl = metadata.appIcon?.startsWith("http") ? metadata.appIcon : "/icons/icon-512.png";
       let iconType = "image/svg+xml";
       if (iconUrl.endsWith(".png")) iconType = "image/png";
       if (iconUrl.endsWith(".jpg") || iconUrl.endsWith(".jpeg")) iconType = "image/jpeg";
@@ -78,7 +78,7 @@ async function startServer() {
     try {
       const metadataPath = path.join(process.cwd(), "metadata.json");
       const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
-      const icon = metadata.appIcon || "🌳";
+      const icon = metadata.appIcon && !metadata.appIcon.startsWith("/") ? metadata.appIcon : "⛪";
 
       if (icon.startsWith("http")) {
         return res.redirect(icon);
@@ -86,7 +86,7 @@ async function startServer() {
 
       const svg = `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-          <rect width="128" height="128" rx="32" fill="#4A6741" />
+          <rect width="128" height="128" rx="32" fill="#1e1e1e" />
           <text y="92" x="64" text-anchor="middle" font-family="Arial, sans-serif" font-size="75" fill="white">${icon}</text>
         </svg>
       `.trim();

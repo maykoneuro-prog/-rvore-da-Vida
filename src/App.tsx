@@ -86,12 +86,13 @@ export function App() {
       } else {
         // Initialize if missing
         const defaultChurch = {
-          name: 'Árvore da Vida',
-          pastorName: 'Administrador',
-          primaryColor: '#4A6741',
-          secondaryColor: '#2D3E27',
+          name: 'Samaritano',
+          pastorName: 'Pr. Responsável',
+          primaryColor: '#1e1e1e',
+          secondaryColor: '#121212',
           accentColor: '#D4AF37',
-          logoUrl: 'https://i.imgur.com/lpVHWTp.png'
+          logoUrl: '/icons/icon-512.png',
+          appIcon: '/icons/icon-512.png'
         };
         try {
           await setDoc(doc(db, 'churches', 'main_church'), defaultChurch);
@@ -113,7 +114,7 @@ export function App() {
       if (church.accentColor) root.style.setProperty('--color-church-accent', church.accentColor);
       
       // Update Document Title
-      document.title = church.name || 'Árvore da Vida';
+      document.title = church.name || 'Samaritano';
       
       // Update Tab Icon and Apple Touch Icon
       const updateLinkTag = (rel: string, href: string) => {
@@ -126,9 +127,9 @@ export function App() {
         link.href = href;
       };
 
-      const iconPath = church.appIcon || church.logoUrl || '🌳';
+      const iconPath = church.appIcon || church.logoUrl || '/icons/icon-192.png';
       
-      if (iconPath.startsWith('http')) {
+      if (iconPath.startsWith('http') || iconPath.startsWith('/')) {
         updateLinkTag('icon', iconPath);
         updateLinkTag('apple-touch-icon', iconPath);
       } else {
@@ -185,11 +186,12 @@ export function App() {
       try {
         await setDoc(doc(db, 'users', 'global_admin'), adminProfile, { merge: true });
         await setDoc(doc(db, 'churches', 'main_church'), {
-          name: 'Árvore da Vida',
-          pastorName: 'Administrador',
-          primaryColor: '#4A6741',
-          secondaryColor: '#2D3E27',
-          accentColor: '#D4AF37'
+          name: 'Samaritano',
+          pastorName: 'Pr. Responsável',
+          primaryColor: '#1e1e1e',
+          secondaryColor: '#121212',
+          accentColor: '#D4AF37',
+          appIcon: '/icons/icon-512.png'
         }, { merge: true });
         console.log("Admin Firestore sync successful");
       } catch (err) {
@@ -259,9 +261,9 @@ export function App() {
           {church?.logoUrl ? (
             <img src={church.logoUrl} alt="Logo" className="w-20 h-20 rounded-full object-cover mb-4 shadow-xl" referrerPolicy="no-referrer" />
           ) : (
-            <div className="w-16 h-16 bg-church-primary/20 rounded-full mb-4"></div>
+            <img src="/icons/icon-192.png" alt="Logo" className="w-20 h-20 rounded-full object-cover mb-4 shadow-xl opacity-50" />
           )}
-          <p className="text-stone-400 font-serif italic">Cultivando sua Árvore da Vida...</p>
+          <p className="text-stone-400 font-serif italic">Carregando Samaritano...</p>
         </div>
       </div>
     );
@@ -275,10 +277,10 @@ export function App() {
             {church?.logoUrl ? (
               <img src={church.logoUrl} alt="Logo" className="w-24 h-24 rounded-full object-cover mb-4 shadow-2xl border-4 border-white" referrerPolicy="no-referrer" />
             ) : (
-              <div className="w-20 h-20 bg-church-primary rounded-full flex items-center justify-center text-white text-3xl mb-4">🌳</div>
+              <img src="/icons/icon-192.png" alt="Logo" className="w-20 h-20 rounded-full object-cover mb-4 shadow-xl" />
             )}
             <h1 className="text-3xl font-serif text-church-primary font-bold text-center">
-              {church?.name || 'Árvore da Vida'}
+              {church?.name || 'Samaritano'}
             </h1>
           </div>
           <p className="text-stone-500 text-center mb-8 italic">
@@ -398,9 +400,9 @@ export function App() {
           {church?.logoUrl ? (
             <img src={church.logoUrl} alt="Logo" className="w-10 h-10 rounded-full object-cover" referrerPolicy="no-referrer" />
           ) : (
-            <div className="w-10 h-10 bg-church-primary rounded-full flex items-center justify-center text-white text-xs">🌳</div>
+            <img src="/icons/icon-192.png" alt="Logo" className="w-10 h-10 rounded-full object-cover" />
           )}
-          <h1 className="text-xl font-serif text-church-primary font-bold">{church?.name || 'Árvore da Vida'}</h1>
+          <h1 className="text-xl font-serif text-church-primary font-bold">{church?.name || 'Samaritano'}</h1>
         </div>
         <div className="flex items-center gap-4">
           {profile?.role === 'admin' && (

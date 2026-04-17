@@ -176,7 +176,7 @@ export function FinanceView({ profile }: { profile: UserProfile }) {
 
   const exportPDF = () => {
     const doc = new jsPDF();
-    doc.text('Balancete Financeiro - Árvore da Vida', 14, 15);
+    doc.text('Balancete Financeiro - Samaritano', 14, 15);
     doc.text(`Saldo Inicial: R$ ${currentInitialBalance.toLocaleString()}`, 14, 25);
     doc.text(`Total Entradas: R$ ${globalIncome.toLocaleString()}`, 14, 32);
     doc.text(`Total Saídas: R$ ${globalExpense.toLocaleString()}`, 14, 39);
