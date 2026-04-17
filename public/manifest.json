@@ -1,14 +1,6 @@
 {
   "short_name": "Samaritano",
   "name": "Samaritano",
-  "description": "Gestão e engajamento para igrejas.",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#1e1e1e",
-  "theme_color": "#1e1e1e",
-  "appIcon": "https://i.imgur.com/lpVHWTp_d.png?maxwidth=520&shape=thumb&fidelity=high",
-  "requestFramePermissions": [],
-  "majorCapabilities": [],
   "icons": [
     {
       "src": "https://i.imgur.com/lpVHWTp_d.png?maxwidth=520&shape=thumb&fidelity=high",
@@ -20,7 +12,10 @@
       "type": "image/png",
       "sizes": "512x512"
     }
-  ]
+  ],
+  "start_url": "/",
+  "background_color": "#1e1e1e",
+  "display": "standalone",
+  "theme_color": "#1e1e1e",
+  "description": "Gestão e engajamento para igrejas."
 }
-
-

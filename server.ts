@@ -56,8 +56,7 @@ async function startServer() {
         background_color: metadata.background_color || "#1e1e1e",
         display: "standalone",
         theme_color: metadata.theme_color || "#1e1e1e",
-        description: metadata.description || "Gestão e engajamento para igrejas.",
-        id: "/"
+        description: metadata.description || "Gestão e engajamento para igrejas."
       };
       
       res.setHeader("Content-Type", "application/manifest+json");
