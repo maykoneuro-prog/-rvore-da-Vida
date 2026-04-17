@@ -37,36 +37,32 @@ async function startServer() {
       const metadataPath = path.join(process.cwd(), "metadata.json");
       const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
       
-      const appName = metadata.name || "Samaritano";
-      const iconUrl = metadata.appIcon?.startsWith("http") ? metadata.appIcon : "/icons/icon-512.png";
-      let iconType = "image/svg+xml";
-      if (iconUrl.endsWith(".png")) iconType = "image/png";
-      if (iconUrl.endsWith(".jpg") || iconUrl.endsWith(".jpeg")) iconType = "image/jpeg";
-      if (iconUrl.endsWith(".ico")) iconType = "image/x-icon";
-
       const manifest = {
-        name: appName,
-        short_name: metadata.short_name || (appName.length > 12 ? appName.substring(0, 10) + ".." : appName),
-        icons: metadata.icons || [
+        short_name: metadata.short_name || "Samaritano",
+        name: metadata.name || "Samaritano",
+        icons: [
           {
-            src: "/icons/icon-192.png",
-            sizes: "192x192",
+            src: "https://i.imgur.com/lpVHWTp_d.png?maxwidth=520&shape=thumb&fidelity=high",
             type: "image/png",
-            purpose: "any maskable"
+            sizes: "192x192"
           },
           {
-            src: "/icons/icon-512.png",
-            sizes: "512x512",
+            src: "https://i.imgur.com/lpVHWTp_d.png?maxwidth=520&shape=thumb&fidelity=high",
             type: "image/png",
-            purpose: "any maskable"
+            sizes: "512x512"
           }
         ],
-        start_url: metadata.start_url || "/",
-        display: metadata.display || "standalone",
-        background_color: metadata.background_color || "#ffffff",
-        theme_color: metadata.theme_color || "#4A6741"
+        start_url: "/",
+        background_color: metadata.background_color || "#1e1e1e",
+        display: "standalone",
+        theme_color: metadata.theme_color || "#1e1e1e",
+        description: metadata.description || "Gestão e engajamento para igrejas.",
+        id: "/"
       };
-      res.json(manifest);
+      
+      res.setHeader("Content-Type", "application/manifest+json");
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      res.send(JSON.stringify(manifest, null, 2));
     } catch (e) {
       console.error("Manifest error:", e);
       res.status(500).json({ error: "Manifest error" });

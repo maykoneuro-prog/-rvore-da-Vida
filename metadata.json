@@ -4,23 +4,23 @@
   "description": "Gestão e engajamento para igrejas com interface gamificada e devocionais por IA.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#1e1e1e",
   "theme_color": "#1e1e1e",
-  "appIcon": "/icons/icon-512.png",
+  "appIcon": "https://i.imgur.com/lpVHWTp_d.png?maxwidth=520&shape=thumb&fidelity=high",
   "requestFramePermissions": [],
   "majorCapabilities": [],
   "icons": [
     {
-      "src": "/icons/icon-192.png",
-      "sizes": "192x192",
+      "src": "https://i.imgur.com/lpVHWTp_d.png?maxwidth=520&shape=thumb&fidelity=high",
       "type": "image/png",
-      "purpose": "any maskable"
+      "sizes": "192x192"
     },
     {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
+      "src": "https://i.imgur.com/lpVHWTp_d.png?maxwidth=520&shape=thumb&fidelity=high",
       "type": "image/png",
-      "purpose": "any maskable"
+      "sizes": "512x512"
     }
   ]
 }
+
+
