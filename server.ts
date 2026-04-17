@@ -46,8 +46,8 @@ async function startServer() {
 
       const manifest = {
         name: appName,
-        short_name: appName.length > 12 ? appName.substring(0, 10) + ".." : appName,
-        icons: [
+        short_name: metadata.short_name || (appName.length > 12 ? appName.substring(0, 10) + ".." : appName),
+        icons: metadata.icons || [
           {
             src: "/icons/icon-192.png",
             sizes: "192x192",
@@ -61,10 +61,10 @@ async function startServer() {
             purpose: "any maskable"
           }
         ],
-        start_url: "/",
-        display: "standalone",
-        background_color: "#ffffff",
-        theme_color: "#4A6741"
+        start_url: metadata.start_url || "/",
+        display: metadata.display || "standalone",
+        background_color: metadata.background_color || "#ffffff",
+        theme_color: metadata.theme_color || "#4A6741"
       };
       res.json(manifest);
     } catch (e) {
