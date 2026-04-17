@@ -49,9 +49,15 @@ async function startServer() {
         short_name: appName.length > 12 ? appName.substring(0, 10) + ".." : appName,
         icons: [
           {
-            src: iconUrl,
-            sizes: iconUrl.endsWith(".svg") ? "any" : "512x512",
-            type: iconType,
+            src: "/icons/icon-192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "any maskable"
+          },
+          {
+            src: "/icons/icon-512.png",
+            sizes: "512x512",
+            type: "image/png",
             purpose: "any maskable"
           }
         ],

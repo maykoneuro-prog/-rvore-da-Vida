@@ -1,7 +1,21 @@
 {
-  "name": "Paróquia Bom Samaritano",
+  "name": "Samaritano",
+  "short_name": "Samaritano",
   "description": "Gestão e engajamento para igrejas com interface gamificada e devocionais por IA.",
-  "appIcon": "https://i.imgur.com/lpVHWTp_d.png?maxwidth=520&shape=thumb&fidelity=high",
-  "requestFramePermissions": [],
-  "majorCapabilities": []
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1e1e1e",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
