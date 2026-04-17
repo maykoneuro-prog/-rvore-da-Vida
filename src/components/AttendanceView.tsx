@@ -24,8 +24,17 @@ export function AttendanceView() {
       setRecords(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Attendance)));
     });
 
+    const now = new Date();
+    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+    startOfWeek.setHours(0,0,0,0);
+
     const eventsUnsubscribe = onSnapshot(collection(db, 'events'), (snapshot) => {
-      setEvents(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+      const allEvents = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Filter events that happen this week (or are recent)
+      setEvents(allEvents.filter((ev: any) => {
+        const evDate = new Date(ev.date);
+        return evDate >= startOfWeek;
+      }));
     });
 
     return () => {
@@ -61,16 +70,42 @@ export function AttendanceView() {
 
       {showAdd && (
         <form onSubmit={handleAdd} className="glass-card p-6 rounded-3xl space-y-4">
-          <select 
-            className="w-full p-3 rounded-xl bg-stone-100 border-none"
-            value={newRecord.eventName}
-            onChange={e => setNewRecord({...newRecord, eventName: e.target.value})}
-            required
-          >
-            <option value="">Selecione o Culto/Evento</option>
-            {events.map(ev => <option key={ev.id} value={ev.title}>{ev.title}</option>)}
-            <option value="Outro">Outro</option>
-          </select>
+          <div className="space-y-4">
+            <h4 className="text-[10px] text-stone-400 uppercase font-black tracking-widest px-1">Próximos Eventos da Semana</h4>
+            <div className="grid grid-cols-1 gap-2">
+              {events.length > 0 ? events.map(ev => (
+                <button
+                  key={ev.id}
+                  type="button"
+                  onClick={() => setNewRecord({...newRecord, eventName: ev.title})}
+                  className={`p-4 rounded-2xl text-left transition-all border ${
+                    newRecord.eventName === ev.title 
+                      ? 'bg-church-primary text-white border-church-primary shadow-lg' 
+                      : 'bg-stone-50 text-stone-600 border-stone-100 hover:bg-stone-100'
+                  }`}
+                >
+                  <p className="font-bold text-sm">{ev.title}</p>
+                  <p className={`text-[10px] ${newRecord.eventName === ev.title ? 'text-white/70' : 'text-stone-400'}`}>
+                    {new Date(ev.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', weekday: 'long', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </button>
+              )) : (
+                <p className="text-[10px] text-stone-400 italic text-center py-4">Nenhum evento futuro encontrado para esta semana.</p>
+              )}
+            </div>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-stone-100"></div></div>
+              <div className="relative flex justify-center text-[8px] uppercase font-bold text-stone-300 bg-white px-2">Ou digite um nome</div>
+            </div>
+            <input 
+              type="text" 
+              placeholder="Digite o nome do evento"
+              className="w-full p-3 rounded-xl bg-stone-100 border-none text-sm"
+              value={newRecord.eventName}
+              onChange={e => setNewRecord({...newRecord, eventName: e.target.value})}
+              required
+            />
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <input 
               type="number" placeholder="Total de Pessoas" required

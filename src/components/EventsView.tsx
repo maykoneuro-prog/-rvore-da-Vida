@@ -3,7 +3,8 @@ import { db } from '../firebase';
 import { UserProfile } from '../App';
 import { format, addWeeks, addMonths, eachDayOfInterval, getDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { collection, onSnapshot, addDoc, query, orderBy, deleteDoc, doc, writeBatch } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, query, orderBy, deleteDoc, doc, writeBatch, where } from 'firebase/firestore';
+import { Users, Baby, UserCheck } from 'lucide-react';
 
 interface ChurchEvent {
   id: string;
@@ -16,6 +17,7 @@ interface ChurchEvent {
 
 export function EventsView({ profile }: { profile: UserProfile }) {
   const [events, setEvents] = useState<ChurchEvent[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<ChurchEvent | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
@@ -35,8 +37,25 @@ export function EventsView({ profile }: { profile: UserProfile }) {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setEvents(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ChurchEvent)));
     });
-    return unsubscribe;
+
+    const attQ = query(collection(db, 'attendance'), orderBy('date', 'desc'));
+    const attUnsubscribe = onSnapshot(attQ, (snapshot) => {
+      setAttendanceRecords(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+
+    return () => {
+      unsubscribe();
+      attUnsubscribe();
+    };
   }, []);
+
+  const getEventAttendance = (eventTitle: string, eventDate: string) => {
+    const evDate = new Date(eventDate).toLocaleDateString();
+    return attendanceRecords.find(record => 
+      record.eventName === eventTitle && 
+      record.date?.toDate().toLocaleDateString() === evDate
+    );
+  };
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -212,7 +231,7 @@ export function EventsView({ profile }: { profile: UserProfile }) {
 
       {selectedEvent ? (
         <div className="glass-card overflow-hidden rounded-[2.5rem] animate-in zoom-in duration-300">
-          <div className="h-64 bg-stone-200 relative">
+          <div className="h-[900px] bg-stone-200 relative">
             {selectedEvent.imageUrl ? (
               <img src={selectedEvent.imageUrl} alt={selectedEvent.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             ) : (
@@ -232,6 +251,34 @@ export function EventsView({ profile }: { profile: UserProfile }) {
                 <p className="text-church-primary font-serif italic">{format(new Date(selectedEvent.date), "EEEE, d 'de' MMMM 'às' HH:mm'h'", { locale: ptBR })}</p>
               </div>
             </div>
+
+            {/* Linked Attendance Bubble */}
+            {getEventAttendance(selectedEvent.title, selectedEvent.date) && (
+              <div className="bg-stone-50 p-6 rounded-3xl border border-stone-100 flex flex-wrap gap-8 animate-in fade-in slide-in-from-top-4 duration-500">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-church-primary">
+                    <Users size={18} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Total</span>
+                  </div>
+                  <p className="text-2xl font-bold text-stone-800">{getEventAttendance(selectedEvent.title, selectedEvent.date).totalPeople}</p>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-blue-500">
+                    <UserCheck size={18} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Visitantes</span>
+                  </div>
+                  <p className="text-2xl font-bold text-stone-800">{getEventAttendance(selectedEvent.title, selectedEvent.date).visitorCount}</p>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-amber-500">
+                    <Baby size={18} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Crianças</span>
+                  </div>
+                  <p className="text-2xl font-bold text-stone-800">{getEventAttendance(selectedEvent.title, selectedEvent.date).childrenCount}</p>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center gap-2 text-stone-500">
               <span>📍</span> {selectedEvent.location}
             </div>

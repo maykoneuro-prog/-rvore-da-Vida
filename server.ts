@@ -3,35 +3,15 @@ import { createServer as createViteServer } from "vite";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import multer from "multer";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Ensure uploads directory exists
-const uploadsDir = path.join(process.cwd(), "uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir);
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `app-icon-${Date.now()}${ext}`);
-  }
-});
-
-const upload = multer({ storage });
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
   app.use(express.json());
-  app.use("/uploads", express.static(uploadsDir));
 
   // API to update metadata.json and manifest info
   app.post("/api/metadata", (req, res) => {
@@ -51,27 +31,6 @@ async function startServer() {
     }
   });
 
-  // API to upload app icon
-  app.post("/api/upload-icon", upload.single("icon"), (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: "No file uploaded" });
-      }
-      
-      const fileUrl = `/uploads/${req.file.filename}`;
-      const metadataPath = path.join(process.cwd(), "metadata.json");
-      const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
-      
-      metadata.appIcon = fileUrl;
-      fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
-      
-      res.json({ success: true, url: fileUrl });
-    } catch (error) {
-      console.error("Error saving uploaded icon:", error);
-      res.status(500).json({ error: "Failed to upload icon" });
-    }
-  });
-
   // Serve app manifest
   app.get("/manifest.json", (req, res) => {
     try {
@@ -79,7 +38,7 @@ async function startServer() {
       const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
       
       const appName = metadata.name || "Árvore da Vida";
-      const iconUrl = metadata.appIcon?.startsWith("/") ? metadata.appIcon : "/api/app-icon.svg";
+      const iconUrl = metadata.appIcon?.startsWith("http") ? metadata.appIcon : "/api/app-icon.svg";
       let iconType = "image/svg+xml";
       if (iconUrl.endsWith(".png")) iconType = "image/png";
       if (iconUrl.endsWith(".jpg") || iconUrl.endsWith(".jpeg")) iconType = "image/jpeg";
@@ -112,13 +71,10 @@ async function startServer() {
   app.get("/api/app-icon.svg", (req, res) => {
     try {
       const metadataPath = path.join(process.cwd(), "metadata.json");
-      if (!fs.existsSync(metadataPath)) {
-        throw new Error("Metadata file not found");
-      }
       const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
       const icon = metadata.appIcon || "🌳";
 
-      if (icon.startsWith("http") || icon.startsWith("/uploads")) {
+      if (icon.startsWith("http")) {
         return res.redirect(icon);
       }
 

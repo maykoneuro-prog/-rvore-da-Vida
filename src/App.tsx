@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { db } from './firebase';
 import { doc, onSnapshot, setDoc, getDocs, collection, query, where } from 'firebase/firestore';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { DevotionalView } from './components/DevotionalView';
 import { EventsView } from './components/EventsView';
 import { FinanceView } from './components/FinanceView';
@@ -299,11 +301,51 @@ export function App() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-[10px] text-stone-400 uppercase ml-2">Nascimento</label>
-                    <input
-                      type="date" required
-                      className="w-full p-4 rounded-2xl bg-stone-100 border-none focus:ring-2 focus:ring-church-primary"
-                      value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})}
-                    />
+                    <div className="grid grid-cols-3 gap-2">
+                      <select
+                        className="p-4 rounded-2xl bg-stone-100 border-none focus:ring-2 focus:ring-church-primary text-sm appearance-none"
+                        value={formData.birthDate ? formData.birthDate.split('-')[2] : ''}
+                        onChange={e => {
+                          const [y = '', m = '', d = ''] = formData.birthDate?.split('-') || [];
+                          setFormData({...formData, birthDate: `${y || '2000'}-${m || '01'}-${e.target.value.padStart(2, '0')}`})
+                        }}
+                        required
+                      >
+                        <option value="">Dia</option>
+                        {Array.from({ length: 31 }, (_, i) => (
+                          <option key={i+1} value={String(i+1).padStart(2, '0')}>{i+1}</option>
+                        ))}
+                      </select>
+                      <select
+                        className="p-4 rounded-2xl bg-stone-100 border-none focus:ring-2 focus:ring-church-primary text-sm appearance-none"
+                        value={formData.birthDate ? formData.birthDate.split('-')[1] : ''}
+                        onChange={e => {
+                          const [y = '', m = '', d = ''] = formData.birthDate?.split('-') || [];
+                          setFormData({...formData, birthDate: `${y || '2000'}-${e.target.value.padStart(2, '0')}-${d || '01'}`})
+                        }}
+                        required
+                      >
+                        <option value="">Mês</option>
+                        {Array.from({ length: 12 }, (_, i) => (
+                          <option key={i+1} value={String(i+1).padStart(2, '0')}>{format(new Date(2000, i, 1), 'MMMM', { locale: ptBR })}</option>
+                        ))}
+                      </select>
+                      <select
+                        className="p-4 rounded-2xl bg-stone-100 border-none focus:ring-2 focus:ring-church-primary text-sm appearance-none"
+                        value={formData.birthDate ? formData.birthDate.split('-')[0] : ''}
+                        onChange={e => {
+                          const [y = '', m = '', d = ''] = formData.birthDate?.split('-') || [];
+                          setFormData({...formData, birthDate: `${e.target.value}-${m || '01'}-${d || '01'}`})
+                        }}
+                        required
+                      >
+                        <option value="">Ano</option>
+                        {Array.from({ length: 100 }, (_, i) => {
+                          const year = new Date().getFullYear() - i;
+                          return <option key={year} value={String(year)}>{year}</option>
+                        })}
+                      </select>
+                    </div>
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] text-stone-400 uppercase ml-2">Já é membro?</label>
@@ -377,8 +419,12 @@ export function App() {
                profile?.role === 'media' ? 'Mídia' : 'Membro'}
             </span>
           </div>
-          <button onClick={logout} className="p-2 bg-stone-200 rounded-full hover:bg-stone-300 transition-colors">
-            🚪
+          <button 
+            onClick={logout} 
+            className="flex items-center gap-2 px-4 py-2 bg-stone-100 text-stone-500 rounded-full hover:bg-stone-200 transition-colors text-xs font-bold"
+          >
+            <span>🚪</span>
+            <span>Sair</span>
           </button>
         </div>
       </header>
