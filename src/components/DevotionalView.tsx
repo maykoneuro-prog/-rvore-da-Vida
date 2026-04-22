@@ -16,6 +16,7 @@ interface Devotional {
   prayer: string;
   application: string;
   date: any;
+  dateString?: string;
 }
 
 interface RankedMember {
@@ -31,22 +32,39 @@ export function DevotionalView({ profile, onAuthRequired }: { profile: UserProfi
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [ranking, setRanking] = useState<RankedMember[]>([]);
+  const [history, setHistory] = useState<Devotional[]>([]);
   const [isLogging, setIsLogging] = useState(false);
   const [localLoggedToday, setLocalLoggedToday] = useState(false);
 
   // Use local date for "today" to match user's physical day
   const today = new Date().toLocaleDateString('en-CA'); 
+  const displayDate = new Date().toLocaleDateString('pt-BR');
   const hasLoggedToday = profile ? (profile.lastDevotionalDate === today || localLoggedToday) : false;
   const currentMonth = new Date().getMonth();
   const daysInMonth = new Date(new Date().getFullYear(), currentMonth + 1, 0).getDate();
 
   useEffect(() => {
-    const q = query(collection(db, 'devotionals'), orderBy('date', 'desc'), limit(1));
+    // Tenta buscar o devocional de HOJE especificamente
+    const q = query(
+      collection(db, 'devotionals'), 
+      where('dateString', '==', today),
+      limit(1)
+    );
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
       if (!snapshot.empty) {
         setDevotional(snapshot.docs[0].data() as Devotional);
+        setLoading(false);
+      } else {
+        // Se não encontrar o de hoje, pega o mais recente como fallback
+        const lastQ = query(collection(db, 'devotionals'), orderBy('date', 'desc'), limit(1));
+        getDocs(lastQ).then(lastSnap => {
+          if (!lastSnap.empty) {
+            setDevotional(lastSnap.docs[0].data() as Devotional);
+          }
+          setLoading(false);
+        });
       }
-      setLoading(false);
     });
 
     const rankQuery = query(
@@ -67,12 +85,19 @@ export function DevotionalView({ profile, onAuthRequired }: { profile: UserProfi
       }));
     });
 
-    // Remove the automatic call to logDevotional here
-    // We will add a button at the end to make it explicit
+    const historyQuery = query(
+      collection(db, 'devotionals'),
+      orderBy('date', 'desc'),
+      limit(5)
+    );
+    const stopHistory = onSnapshot(historyQuery, (snapshot) => {
+      setHistory(snapshot.docs.map(d => d.data() as Devotional));
+    });
     
     return () => {
       unsubscribe();
       stopRank();
+      stopHistory();
     };
   }, [profile?.uid]);
 
@@ -163,7 +188,8 @@ export function DevotionalView({ profile, onAuthRequired }: { profile: UserProfi
       if (data) {
         await addDoc(collection(db, 'devotionals'), {
           ...data,
-          date: serverTimestamp()
+          date: serverTimestamp(),
+          dateString: today
         });
       } else {
         setError('Não foi possível gerar o devocional. Tente novamente.');
@@ -189,7 +215,7 @@ export function DevotionalView({ profile, onAuthRequired }: { profile: UserProfi
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-4">
         <div>
           <h2 className="text-4xl font-serif text-church-primary italic tracking-tight">Pão Diário</h2>
-          <p className="text-stone-400 text-xs font-bold uppercase tracking-widest mt-1">Alimento Espiritual Diário</p>
+          <p className="text-stone-400 text-xs font-bold uppercase tracking-widest mt-1">Alimento de Hoje • {displayDate}</p>
         </div>
         
         <div className="flex gap-2">
@@ -223,7 +249,14 @@ export function DevotionalView({ profile, onAuthRequired }: { profile: UserProfi
               </div>
               
               <div className="text-center space-y-6 relative">
-                <div className="inline-block bg-church-primary/5 text-church-primary px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Palavra do Dia</div>
+                <div className="inline-block bg-church-primary/5 text-church-primary px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                  {devotional.dateString === today ? 'Palavra do Dia' : 'Devocional Anterior'}
+                </div>
+                {devotional.dateString !== today && profile?.role === 'admin' && (
+                  <div className="bg-amber-50 text-amber-600 text-xs p-3 rounded-2xl font-bold animate-pulse border border-amber-100">
+                    ⚠️ Este é um devocional de outro dia. Clique em "Gerar Novo" para atualizar hoje.
+                  </div>
+                )}
                 <h3 className="text-4xl font-bold text-church-secondary font-serif italic tracking-tight leading-tight">{devotional.title}</h3>
                 <div className="max-w-xl mx-auto">
                   <p className="text-church-primary font-serif italic text-2xl leading-relaxed">"{devotional.verse}"</p>
@@ -415,6 +448,33 @@ export function DevotionalView({ profile, onAuthRequired }: { profile: UserProfi
               <div className="ml-auto">
                 <CheckCircle2 className={hasLoggedToday ? "text-green-500" : "text-stone-300"} />
               </div>
+            </div>
+          </div>
+
+          {/* Jornada de Fé - Histórico */}
+          <div className="glass-card p-8 rounded-[3rem] space-y-6 shadow-lg border-2 border-stone-50">
+            <div className="flex items-center gap-2 border-b pb-4">
+              <Trophy className="text-church-primary" size={18} />
+              <h4 className="font-bold text-xs uppercase tracking-widest text-church-secondary">Jornada de Fé</h4>
+            </div>
+            
+            <div className="space-y-3">
+              {history.map((dev, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setDevotional(dev)}
+                  className={`w-full text-left p-4 rounded-2xl transition-all border ${
+                    devotional?.title === dev.title 
+                      ? 'bg-church-primary text-white border-church-primary shadow-lg shadow-church-primary/20' 
+                      : 'bg-stone-50 border-stone-100 hover:bg-stone-100 text-stone-600'
+                  }`}
+                >
+                  <p className="text-[9px] font-black uppercase opacity-60 mb-0.5">
+                    {dev.dateString ? new Date(dev.dateString + 'T12:00:00').toLocaleDateString('pt-BR') : 'Anterior'}
+                  </p>
+                  <p className="text-xs font-bold line-clamp-1">{dev.title}</p>
+                </button>
+              ))}
             </div>
           </div>
         </div>
