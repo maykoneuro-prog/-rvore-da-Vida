@@ -367,41 +367,43 @@ export function DevotionalView({ profile, onAuthRequired }: { profile: UserProfi
 
         <div className="space-y-8">
           {/* Progress Widget */}
-          <div className="glass-card p-8 rounded-[3rem] bg-gradient-to-br from-church-primary to-church-secondary text-white shadow-xl relative overflow-hidden">
-            <div className="absolute -right-4 -bottom-4 opacity-10">
-              <Target size={120} />
-            </div>
-            <div className="relative space-y-6">
-              <div className="flex justify-between items-center">
-                <h4 className="font-serif italic text-xl">Minha Jornada</h4>
-                <div className="bg-white/20 p-2 rounded-full"><Trophy size={16} /></div>
+          {profile && (
+            <div className="glass-card p-8 rounded-[3rem] bg-gradient-to-br from-church-primary to-church-secondary text-white shadow-xl relative overflow-hidden">
+              <div className="absolute -right-4 -bottom-4 opacity-10">
+                <Target size={120} />
               </div>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest opacity-80">
-                  <span>Meta do Mês</span>
-                  <span>{profile.monthlyDevotionals || 0} de {daysInMonth}</span>
+              <div className="relative space-y-6">
+                <div className="flex justify-between items-center">
+                  <h4 className="font-serif italic text-xl">Minha Jornada</h4>
+                  <div className="bg-white/20 p-2 rounded-full"><Trophy size={16} /></div>
                 </div>
-                <div className="h-4 bg-white/20 rounded-full overflow-hidden p-1">
-                  <div 
-                    className="h-full bg-white rounded-full transition-all duration-1000"
-                    style={{ width: `${((profile.monthlyDevotionals || 0) / daysInMonth) * 100}%` }}
-                  ></div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest opacity-80">
+                    <span>Meta do Mês</span>
+                    <span>{(profile.monthlyDevotionals || 0)} de {daysInMonth}</span>
+                  </div>
+                  <div className="h-4 bg-white/20 rounded-full overflow-hidden p-1">
+                    <div 
+                      className="h-full bg-white rounded-full transition-all duration-1000"
+                      style={{ width: `${((profile.monthlyDevotionals || 0) / daysInMonth) * 100}%` }}
+                    ></div>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex gap-4 pt-2">
-                <div className="bg-white/10 p-4 rounded-3xl flex-1 text-center border border-white/10">
-                  <p className="text-[9px] uppercase font-bold opacity-60 mb-1">🔥 Chama Acesa</p>
-                  <p className="text-2xl font-bold">{profile?.streak || 0}d</p>
-                </div>
-                <div className="bg-white/10 p-4 rounded-3xl flex-1 text-center border border-white/10">
-                  <p className="text-[9px] uppercase font-bold opacity-60 mb-1">⭐ Estrelas</p>
-                  <p className="text-2xl font-bold">{profile?.stars || 0}</p>
+                <div className="flex gap-4 pt-2">
+                  <div className="bg-white/10 p-4 rounded-3xl flex-1 text-center border border-white/10">
+                    <p className="text-[9px] uppercase font-bold opacity-60 mb-1">🔥 Chama Acesa</p>
+                    <p className="text-2xl font-bold">{(profile.streak || 0)}d</p>
+                  </div>
+                  <div className="bg-white/10 p-4 rounded-3xl flex-1 text-center border border-white/10">
+                    <p className="text-[9px] uppercase font-bold opacity-60 mb-1">⭐ Estrelas</p>
+                    <p className="text-2xl font-bold">{(profile.stars || 0)}</p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Ranking Top 3 */}
           <div className="glass-card p-8 rounded-[3rem] space-y-6 shadow-lg border-2 border-stone-50">
