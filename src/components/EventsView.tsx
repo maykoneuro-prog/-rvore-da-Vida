@@ -15,7 +15,7 @@ interface ChurchEvent {
   imageUrl?: string;
 }
 
-export function EventsView({ profile }: { profile: UserProfile }) {
+export function EventsView({ profile }: { profile: UserProfile | null }) {
   const [events, setEvents] = useState<ChurchEvent[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
   const [showAdd, setShowAdd] = useState(false);
@@ -138,7 +138,7 @@ export function EventsView({ profile }: { profile: UserProfile }) {
           >
             {viewMode === 'list' ? '📅 Mensal' : '📋 Lista'}
           </button>
-          {(profile.role === 'admin' || profile.role === 'media') && (
+          {(profile?.role === 'admin' || profile?.role === 'media') && (
             <button 
               onClick={() => setShowAdd(!showAdd)}
               className="bg-church-primary text-white px-4 py-2 rounded-full text-xs font-bold"
@@ -373,7 +373,7 @@ export function EventsView({ profile }: { profile: UserProfile }) {
                 <p className="text-[10px] sm:text-xs text-stone-400">{format(new Date(event.date), "d 'de' MMM '•' HH:mm'h'", { locale: ptBR })}</p>
                 <p className="text-[10px] sm:text-xs text-stone-500 mt-1 line-clamp-1">📍 {event.location}</p>
               </div>
-              {(profile.role === 'admin' || profile.role === 'media') && (
+              {(profile?.role === 'admin' || profile?.role === 'media') && (
                 <button 
                   onClick={(e) => { e.stopPropagation(); deleteDoc(doc(db, 'events', event.id)); }}
                   className="p-2 text-stone-300 hover:text-red-500"

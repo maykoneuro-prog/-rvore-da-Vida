@@ -35,8 +35,15 @@ export function App() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [church, setChurch] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [authMode, setAuthMode] = useState<'login' | 'register' | 'app'>('login');
+  const [authMode, setAuthMode] = useState<'login' | 'register' | 'app'>('app');
   const [currentView, setCurrentView] = useState<'home' | 'devotional' | 'events' | 'finance' | 'settings' | 'census' | 'attendance'>('home');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get('v');
+    if (view === 'devotional') setCurrentView('devotional');
+    if (view === 'events') setCurrentView('events');
+  }, []);
   const [formData, setFormData] = useState({ 
     name: '', 
     phone: '', 
@@ -297,7 +304,13 @@ export function App() {
   if (authMode !== 'app') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-stone-50 p-4">
-        <div className="glass-card p-8 rounded-[2rem] max-w-md w-full">
+        <div className="glass-card p-8 rounded-[2rem] max-w-md w-full relative">
+          <button 
+            onClick={() => setAuthMode('app')}
+            className="absolute top-4 right-4 text-stone-400 hover:text-stone-600 p-2"
+          >
+            ✕
+          </button>
           <div className="flex flex-col items-center mb-8">
             {church?.logoUrl ? (
               <img src={church.logoUrl} alt="Logo" className="w-24 h-24 rounded-full object-cover mb-4 shadow-2xl border-4 border-white" referrerPolicy="no-referrer" />
@@ -438,21 +451,34 @@ export function App() {
               ⚙️ Painel ADM
             </button>
           )}
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-bold text-stone-800">{profile?.name}</p>
-            <span className="text-[9px] bg-stone-100 px-2 py-0.5 rounded-full text-stone-500 uppercase font-bold tracking-widest">
-              {profile?.role === 'admin' ? 'Pastor / ADM' : 
-               profile?.role === 'treasurer' ? 'Tesoureiro' : 
-               profile?.role === 'media' ? 'Mídia' : 'Membro'}
-            </span>
+          <div className="text-right">
+            {profile ? (
+              <div className="hidden sm:block">
+                <p className="text-sm font-bold text-stone-800">{profile.name}</p>
+                <span className="text-[9px] bg-stone-100 px-2 py-0.5 rounded-full text-stone-500 uppercase font-bold tracking-widest">
+                  {profile.role === 'admin' ? 'Pastor / ADM' : 
+                   profile.role === 'treasurer' ? 'Tesoureiro' : 
+                   profile.role === 'media' ? 'Mídia' : 'Membro'}
+                </span>
+              </div>
+            ) : (
+              <button 
+                onClick={() => setAuthMode('login')}
+                className="text-xs font-bold bg-church-primary/10 text-church-primary px-4 py-2 rounded-full hover:bg-church-primary/20 transition-colors"
+              >
+                Entrar
+              </button>
+            )}
           </div>
-          <button 
-            onClick={logout} 
-            className="flex items-center gap-2 px-4 py-2 bg-stone-100 text-stone-500 rounded-full hover:bg-stone-200 transition-colors text-xs font-bold"
-          >
-            <span>🚪</span>
-            <span>Sair</span>
-          </button>
+          {profile && (
+            <button 
+              onClick={logout} 
+              className="flex items-center gap-2 px-4 py-2 bg-stone-100 text-stone-500 rounded-full hover:bg-stone-200 transition-colors text-xs font-bold"
+            >
+              <span>🚪</span>
+              <span>Sair</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -487,11 +513,23 @@ export function App() {
             )}
 
             <div className="mb-12 text-center animate-in fade-in zoom-in duration-700">
-              <h2 className="text-4xl font-serif text-church-secondary mb-2 italic">Olá, {profile?.name.split(' ')[0]}</h2>
-              <div className="flex items-center justify-center gap-2 text-church-accent">
-                <span>🔥</span>
-                <span className="font-bold">{profile?.streak || 0} dias de Chama Acesa</span>
-              </div>
+              <h2 className="text-4xl font-serif text-church-secondary mb-2 italic">
+                {profile ? `Olá, ${profile.name.split(' ')[0]}` : 'Bem-vindo Abençoado'}
+              </h2>
+              {profile ? (
+                <div className="flex items-center justify-center gap-2 text-church-accent">
+                  <span>🔥</span>
+                  <span className="font-bold">{profile.streak || 0} dias de Chama Acesa</span>
+                </div>
+              ) : (
+                <div 
+                  onClick={() => setAuthMode('register')}
+                  className="inline-flex items-center gap-2 bg-church-primary/5 px-6 py-2 rounded-full cursor-pointer hover:bg-church-primary/10 transition-colors"
+                >
+                  <span className="text-xs font-bold text-church-primary uppercase tracking-widest">Fazer parte do Samaritano</span>
+                  <span className="text-xs font-bold text-church-primary">✨</span>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
@@ -533,8 +571,8 @@ export function App() {
           </>
         )}
 
-        {currentView === 'devotional' && profile && <DevotionalView profile={profile} />}
-        {currentView === 'events' && profile && <EventsView profile={profile} />}
+        {currentView === 'devotional' && <DevotionalView profile={profile} onAuthRequired={() => setAuthMode('login')} />}
+        {currentView === 'events' && <EventsView profile={profile} />}
         {currentView === 'finance' && profile && <FinanceView profile={profile} />}
         {currentView === 'settings' && profile && <SettingsView profile={profile} />}
         {currentView === 'census' && <MemberListView />}

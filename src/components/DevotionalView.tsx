@@ -26,7 +26,7 @@ interface RankedMember {
   stars: number;
 }
 
-export function DevotionalView({ profile }: { profile: UserProfile }) {
+export function DevotionalView({ profile, onAuthRequired }: { profile: UserProfile | null, onAuthRequired: () => void }) {
   const [devotional, setDevotional] = useState<Devotional | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -36,7 +36,7 @@ export function DevotionalView({ profile }: { profile: UserProfile }) {
 
   // Use local date for "today" to match user's physical day
   const today = new Date().toLocaleDateString('en-CA'); 
-  const hasLoggedToday = profile.lastDevotionalDate === today || localLoggedToday;
+  const hasLoggedToday = profile ? (profile.lastDevotionalDate === today || localLoggedToday) : false;
   const currentMonth = new Date().getMonth();
   const daysInMonth = new Date(new Date().getFullYear(), currentMonth + 1, 0).getDate();
 
@@ -74,9 +74,13 @@ export function DevotionalView({ profile }: { profile: UserProfile }) {
       unsubscribe();
       stopRank();
     };
-  }, [profile.uid]);
+  }, [profile?.uid]);
 
   const logDevotional = async () => {
+    if (!profile) {
+      onAuthRequired();
+      return;
+    }
     if (isLogging) return;
     setIsLogging(true);
     setError('');
@@ -173,7 +177,8 @@ export function DevotionalView({ profile }: { profile: UserProfile }) {
 
   const shareOnWhatsApp = () => {
     if (!devotional) return;
-    const text = `*${devotional.title}*\n\n"${devotional.verse}"\n\nLeia mais no nosso app: ${window.location.href}`;
+    const shareUrl = `${window.location.origin}${window.location.pathname}?v=devotional`;
+    const text = `*${devotional.title}*\n\n"${devotional.verse}"\n\nLeia mais no nosso app: ${shareUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -197,7 +202,7 @@ export function DevotionalView({ profile }: { profile: UserProfile }) {
               <span>📱</span> Compartilhar
             </button>
           )}
-          {profile.role === 'admin' && (
+          {profile?.role === 'admin' && (
             <button 
               onClick={handleGenerate}
               disabled={generating}
@@ -294,11 +299,18 @@ export function DevotionalView({ profile }: { profile: UserProfile }) {
                           <span className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin"></span>
                           REGISTRANDO...
                         </div>
+                      ) : !profile ? (
+                        'Cadastrar para Logar Leitura'
                       ) : (
                         <>🔥 CONCLUIR DEVOCIONAL</>
                       )}
                     </button>
-                    <p className="text-[10px] text-stone-400 uppercase font-bold tracking-widest">+10 Estrelas • +1 dia de Chama Acesa</p>
+                    {!profile && (
+                      <p className="text-xs text-stone-500 max-w-xs text-center leading-relaxed">
+                        Registre-se para colecionar estrelas e manter seu <span className="font-bold text-church-primary">Fogo no Altar</span> aceso! 🔥
+                      </p>
+                    )}
+                    {profile && <p className="text-[10px] text-stone-400 uppercase font-bold tracking-widest">+10 Estrelas • +1 dia de Chama Acesa</p>}
                     {error && <p className="text-red-500 text-xs font-bold animate-pulse">{error}</p>}
                   </>
                 ) : (
@@ -313,7 +325,7 @@ export function DevotionalView({ profile }: { profile: UserProfile }) {
           ) : (
             <div className="text-center py-20 glass-card rounded-[3rem]">
               <p className="text-stone-400 italic">Nenhum devocional disponível para hoje.</p>
-              {profile.role === 'admin' && (
+              {profile?.role === 'admin' && (
                 <button onClick={handleGenerate} className="mt-4 text-church-primary underline font-bold">Gerar o primeiro agora</button>
               )}
             </div>
@@ -348,11 +360,11 @@ export function DevotionalView({ profile }: { profile: UserProfile }) {
               <div className="flex gap-4 pt-2">
                 <div className="bg-white/10 p-4 rounded-3xl flex-1 text-center border border-white/10">
                   <p className="text-[9px] uppercase font-bold opacity-60 mb-1">🔥 Chama Acesa</p>
-                  <p className="text-2xl font-bold">{profile.streak || 0}d</p>
+                  <p className="text-2xl font-bold">{profile?.streak || 0}d</p>
                 </div>
                 <div className="bg-white/10 p-4 rounded-3xl flex-1 text-center border border-white/10">
                   <p className="text-[9px] uppercase font-bold opacity-60 mb-1">⭐ Estrelas</p>
-                  <p className="text-2xl font-bold">{profile.stars || 0}</p>
+                  <p className="text-2xl font-bold">{profile?.stars || 0}</p>
                 </div>
               </div>
             </div>
