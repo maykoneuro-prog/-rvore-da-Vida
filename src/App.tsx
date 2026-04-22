@@ -36,14 +36,15 @@ export function App() {
   const [church, setChurch] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [authMode, setAuthMode] = useState<'login' | 'register' | 'app'>('app');
-  const [currentView, setCurrentView] = useState<'home' | 'devotional' | 'events' | 'finance' | 'settings' | 'census' | 'attendance'>('home');
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const view = params.get('v');
-    if (view === 'devotional') setCurrentView('devotional');
-    if (view === 'events') setCurrentView('events');
-  }, []);
+  const [currentView, setCurrentView] = useState<'home' | 'devotional' | 'events' | 'finance' | 'settings' | 'census' | 'attendance'>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const view = params.get('v');
+      if (view === 'devotional') return 'devotional';
+      if (view === 'events') return 'events';
+    }
+    return 'home';
+  });
   const [formData, setFormData] = useState({ 
     name: '', 
     phone: '', 
